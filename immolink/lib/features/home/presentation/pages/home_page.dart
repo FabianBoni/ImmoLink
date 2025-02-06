@@ -1,7 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart' as flutter;
+import 'package:flutter/widgets.dart' as widgets show Center;
+import 'package:mongo_dart/mongo_dart.dart';
+import '../../data/repositories/user_repository.dart';
+import '../../data/models/user_model.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  flutter.State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends flutter.State<HomePage> {
+  final UserRepository _userRepository = UserRepository();
+  UserModel? currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final user = await _userRepository.getUser(ObjectId.fromHexString('your-user-id'));
+    setState(() {
+      currentUser = user;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,12 +60,12 @@ class HomePage extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Welcome',
-                  style: TextStyle(
+                Text(
+                  'Welcome ${currentUser?.name ?? ""}',
+                  style: const TextStyle(
                     fontSize: 18,
                     fontFamily: 'Poppins',
-                    color: Color(0x00000000),
+                    color: Color(0xFF000000),
                   ),
                 ),
                 Container(
@@ -186,13 +212,23 @@ class HomePage extends StatelessWidget {
   }
 
   Widget _buildPropertySection() {
-    // Implementation for property section
-    return Container(); // Add property section implementation
+    return Container(
+      height: 200,
+      padding: const EdgeInsets.all(20),
+      child: const widgets.Center(
+        child: Text('Property Section - Coming Soon'),
+      ),
+    );
   }
 
   Widget _buildRecentActivitySection() {
-    // Implementation for recent activity section
-    return Container(); // Add recent activity section implementation
+    return Container(
+      height: 200,
+      padding: const EdgeInsets.all(20),
+      child: const widgets.Center(
+        child: Text('Recent Activity - Coming Soon'),
+      ),
+    );
   }
 
   Widget _buildBottomNavigationBar() {
