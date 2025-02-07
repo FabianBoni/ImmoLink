@@ -56,25 +56,26 @@ class AuthService {
       rethrow;
     }
   }
+    Future<Map<String, dynamic>> loginUser({
+      required String email,
+      required String password,
+    }) async {
+      final response = await http.post(
+        Uri.parse('$_apiUrl/auth/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'email': email,
+          'password': password,
+        }),
+      );
 
-  Future<Map<String, dynamic>> loginUser({
-    required String email,
-    required String password,
-  }) async {
-    final response = await http.post(
-      Uri.parse('$_apiUrl/auth/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'email': email,
-        'password': password,
-      }),
-    );
+      print('Raw response: ${response.body}');
+  
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        // Return the entire user object
+        return data['user'];
+      }
 
-    if (response.statusCode != 200) {
-      final error = json.decode(response.body)['message'] ?? 'Login failed';
-      throw Exception(error);
-    }
-
-    return json.decode(response.body);
-  }
-}
+      throw Exception(json.decode(response.body)['message'] ?? 'Login failed');
+    }  }

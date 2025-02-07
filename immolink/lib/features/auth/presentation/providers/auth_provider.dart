@@ -45,23 +45,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
     
     try {
-      final result = await _authService.loginUser(
+      final userData = await _authService.loginUser(
         email: email,
         password: password,
       );
       
-      // Enhanced session storage
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('userId', result['userId']);
-      await prefs.setString('authToken', result['token']); // If your API returns a token
+      await prefs.setString('userId', userData['userId']);
+      await prefs.setString('email', userData['email']);
+      await prefs.setString('role', userData['role']);
       
       state = state.copyWith(
         isLoading: false,
         isAuthenticated: true,
-        userId: result['userId'],
+        userId: userData['userId'],
         error: null
       );
     } catch (e) {
+      print('Login error: $e');
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),

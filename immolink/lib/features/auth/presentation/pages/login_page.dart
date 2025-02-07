@@ -271,6 +271,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
       child: ElevatedButton(
         onPressed: () async {
           if (_formKey.currentState!.validate()) {
+            print('Login attempt with: ${_emailController.text}'); // Debug log
             await ref.read(authProvider.notifier).login(
               _emailController.text,
               _passwordController.text,

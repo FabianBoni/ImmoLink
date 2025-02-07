@@ -1,26 +1,23 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:immolink/features/auth/presentation/pages/login_page.dart';
-import 'package:immolink/features/auth/presentation/pages/register_page.dart';
 import 'package:immolink/features/home/presentation/pages/home_page.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../features/auth/presentation/providers/auth_provider.dart';
 
 final router = GoRouter(
-  initialLocation: '/login',
-  redirect: (context, state) async {
-    // Get stored session
-    final prefs = await SharedPreferences.getInstance();
-    final hasSession = prefs.containsKey('userId');
+  refreshListenable: _RouterNotifier(),
+  redirect: (BuildContext context, GoRouterState state) {
+    final container = ProviderContainer();
+    final authState = container.read(authProvider);
+    final isAuthenticated = authState.isAuthenticated;
+    final isLoginRoute = state.uri.toString() == '/login';
 
-    // Public routes that don't need auth
-    final isPublicRoute = state.uri.toString() == '/login' || 
-                         state.uri.toString() == '/register';
-
-    // Redirect logic
-    if (!hasSession && !isPublicRoute) {
+    if (!isAuthenticated && !isLoginRoute) {
       return '/login';
     }
-    
-    if (hasSession && isPublicRoute) {
+
+    if (isAuthenticated && isLoginRoute) {
       return '/home';
     }
 
@@ -32,12 +29,27 @@ final router = GoRouter(
       builder: (context, state) => const LoginPage(),
     ),
     GoRoute(
-      path: '/register',
-      builder: (context, state) => const RegisterPage(),
-    ),
-    GoRoute(
       path: '/home',
       builder: (context, state) => const HomePage(),
     ),
   ],
 );
+
+// Custom Listenable for router refreshes
+class _RouterNotifier extends ChangeNotifier {
+  late final ProviderSubscription<AuthState> _subscription;
+
+  _RouterNotifier() {
+    final container = ProviderContainer();
+    _subscription = container.listen(
+      authProvider,
+      (_, __) => notifyListeners(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _subscription.close();
+    super.dispose();
+  }
+}
