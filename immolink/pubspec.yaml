@@ -16,6 +16,8 @@ dependencies:
   mongo_dart: ^0.10.4
   shared_preferences: ^2.5.1
   font_awesome_flutter: ^10.8.0
+  firebase_auth: ^5.4.2
+  cloud_firestore: ^5.6.3
 
 flutter:
   uses-material-design: true
