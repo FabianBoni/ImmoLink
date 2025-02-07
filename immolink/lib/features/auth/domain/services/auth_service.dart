@@ -56,4 +56,25 @@ class AuthService {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>> loginUser({
+    required String email,
+    required String password,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_apiUrl/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'email': email,
+        'password': password,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      final error = json.decode(response.body)['message'] ?? 'Login failed';
+      throw Exception(error);
+    }
+
+    return json.decode(response.body);
+  }
 }

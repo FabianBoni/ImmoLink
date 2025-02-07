@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../data/repositories/user_repository.dart';
+import 'package:immolink/features/auth/data/repositories/auth_repository.dart';
 import '../../data/models/user_model.dart';
-import '../../../auth/data/repositories/auth_repository.dart';
+import '../../data/repositories/user_repository.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  ConsumerState<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends ConsumerState<HomePage> {
   final UserRepository _userRepository = UserRepository();
   final AuthRepository _authRepository = AuthRepository();
   UserModel? currentUser;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -23,181 +25,157 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _checkAuthAndLoadUser() async {
-    final userId = await _authRepository.getCurrentUserId();
+    final isLoggedIn = await _authRepository.isLoggedIn();
     
-    if (userId == null) {
-      // User not logged in, redirect to login
+    if (!isLoggedIn) {
       if (mounted) {
         context.go('/login');
       }
       return;
     }
-
-    // Load user data using session ID
-    final user = await _userRepository.getUser(userId);
-    if (mounted) {
-      setState(() {
-        currentUser = user;
-      });
-    }
+    
+    await _loadUserData();
   }
 
+  Future<void> _loadUserData() async {
+    final user = await _userRepository.getCurrentUser();
+    if (mounted) {
+      setState(() => currentUser = user);
+    }
+  }
   @override
   Widget build(BuildContext context) {
-    // Show loading while checking auth
     if (currentUser == null) {
       return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildWelcomeSection(),
-            _buildQuickAccessSection(),
-            _buildPropertySection(),
-            _buildRecentActivitySection(),
-          ],
-        ),
+      backgroundColor: const Color(0xFFFAFAFA),
+      body: CustomScrollView(
+        slivers: [
+          _buildAppBar(),
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                _buildSearchBar(),
+                _buildQuickActions(),
+                _buildPropertySection(),
+                _buildRecentActivity(),
+              ],
+            ),
+          ),
+        ],
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: _buildBottomNavBar(),
     );
   }
-  Widget _buildWelcomeSection() {
-    return Container(
-      height: 220,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      color: Colors.white,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 52),
-          SizedBox(
-            height: 36,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+  Widget _buildAppBar() {
+    return SliverAppBar(
+      expandedHeight: 200,
+      floating: true,
+      pinned: true,
+      elevation: 0,
+      backgroundColor: Theme.of(context).primaryColor,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).primaryColor,
+                Theme.of(context).colorScheme.secondary,
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  'Welcome ${currentUser?.fullName ?? ""}',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontFamily: 'Poppins',
-                    color: Color(0xFF000000),
-                  ),
-                ),
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFFD8CCC4),
-                    shape: RoundedRectangleBorder(
-                      side: const BorderSide(color: Color(0xFF614E40)),
-                      borderRadius: BorderRadius.circular(18),
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.white,
+                  child: Text(
+                    currentUser!.fullName[0].toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColor,
                     ),
                   ),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            height: 43,
-            decoration: ShapeDecoration(
-              shape: RoundedRectangleBorder(
-                side: const BorderSide(color: Color(0xFFBCC1CA)),
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-            child: const Row(
-              children: [
-                SizedBox(width: 16),
-                Icon(Icons.search, color: Color(0xFFBCC1CA)),
-                SizedBox(width: 12),
+                const SizedBox(height: 8),
                 Text(
-                  'Search your activities...',
+                  'Welcome back,',
                   style: TextStyle(
-                    color: Color(0xFFBCC1CA),
+                    color: Colors.white.withAlpha(204),
                     fontSize: 16,
-                    fontFamily: 'Open Sans',
+                  ),
+                ),
+                Text(
+                  currentUser!.fullName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 13),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildTabButton('Notifications', true),
-              _buildTabButton('Recent Activity', false),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildTabButton(String text, bool isSelected) {
-    return SizedBox(
-      width: 115,
-      height: 52,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            text,
-            style: TextStyle(
-              color: isSelected
-                  ? const Color(0xFF614E40)
-                  : const Color(0xFF565E6C),
-              fontSize: 14,
-              fontFamily: 'Open Sans',
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-            ),
-          ),
-          if (isSelected)
-            Container(
-              height: 4,
-              margin: const EdgeInsets.only(top: 12),
-              decoration: ShapeDecoration(
-                color: const Color(0xFF614E40),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickAccessSection() {
+  Widget _buildSearchBar() {
     return Container(
-      height: 111,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      color: Colors.white,
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(26),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: 'Search properties...',
+          border: InputBorder.none,
+          icon: Icon(Icons.search, color: Theme.of(context).primaryColor),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Quick Access',
+            'Quick Actions',
             style: TextStyle(
               fontSize: 20,
-              fontFamily: 'Poppins',
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 16),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildQuickAccessButton('Pay Rent', Icons.payment),
-              const SizedBox(width: 5),
-              _buildQuickAccessButton('Report Issue', Icons.report_problem),
-              const SizedBox(width: 5),
-              _buildQuickAccessButton('Message Landlord', Icons.message),
+              _buildActionButton(Icons.home, 'My Properties'),
+              _buildActionButton(Icons.message, 'Messages'),
+              _buildActionButton(Icons.settings, 'Settings'),
             ],
           ),
         ],
@@ -205,104 +183,179 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildQuickAccessButton(String text, IconData icon) {
-    return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: ShapeDecoration(
-        color: const Color(0xFF614E40),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.white, size: 16),
-          const SizedBox(width: 8),
-          Text(
-            text,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 14,
-              fontFamily: 'Open Sans',
-            ),
+  Widget _buildActionButton(IconData icon, String label) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).primaryColor,
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
-      ),
+          child: Icon(icon, color: Colors.white),
+        ),
+        const SizedBox(height: 8),
+        Text(label),
+      ],
     );
   }
 
   Widget _buildPropertySection() {
-    return Container(
-      height: 200,
-      padding: const EdgeInsets.all(20),
-      child: const Center(
-        child: Text('Property Section - Coming Soon'),
-      ),
-    );
-  }
-
-  Widget _buildRecentActivitySection() {
-    return Container(
-      height: 200,
-      padding: const EdgeInsets.all(20),
-      child: const Center(
-        child: Text('Recent Activity - Coming Soon'),
-      ),
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return SizedBox(
-      width: 370,
-      height: 52,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildNavItem('Home', Icons.home, true),
-          _buildNavItem('Messages', Icons.message, false),
-          _buildNavItem('Maintenance', Icons.build, false),
-          _buildNavItem('Payments', Icons.payment, false),
-          _buildNavItem('Profile', Icons.person, false),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(String label, IconData icon, bool isSelected) {
-    return Container(
-      width: 74,
-      height: 52,
-      decoration: ShapeDecoration(
-        color: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(6),
-        ),
-      ),
+    return Padding(
+      padding: const EdgeInsets.all(16),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 24,
-            color:
-                isSelected ? const Color(0xFF614E40) : const Color(0xFF565E6C),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
+          const Text(
+            'My Properties',
             style: TextStyle(
-              color: isSelected
-                  ? const Color(0xFF614E40)
-                  : const Color(0xFF565E6C),
-              fontSize: 10,
-              fontFamily: 'Open Sans',
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-              height: 1.60,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: 3,
+              itemBuilder: (context, index) => _buildPropertyCard(),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPropertyCard() {
+    return Container(
+      width: 280,
+      margin: const EdgeInsets.only(right: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(26),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Image.network(
+              'https://picsum.photos/280/140',
+              height: 140,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Property Name',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                const Text('Location'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentActivity() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Recent Activity',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildActivityItem(
+            icon: Icons.home,
+            title: 'New Property Added',
+            subtitle: '2 hours ago',
+          ),
+          _buildActivityItem(
+            icon: Icons.message,
+            title: 'New Message',
+            subtitle: '5 hours ago',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(26),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor.withAlpha(26),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: Theme.of(context).primaryColor),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              Text(subtitle, style: const TextStyle(color: Colors.grey)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNavBar() {
+    return NavigationBar(
+      selectedIndex: _selectedIndex,
+      onDestinationSelected: (index) => setState(() => _selectedIndex = index),
+      destinations: const [
+        NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+        NavigationDestination(icon: Icon(Icons.message), label: 'Messages'),
+        NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+      ],
     );
   }
 }

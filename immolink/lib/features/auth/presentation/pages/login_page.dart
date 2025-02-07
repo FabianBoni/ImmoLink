@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import './auth_provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../providers/auth_provider.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -11,15 +11,16 @@ class LoginPage extends ConsumerStatefulWidget {
   ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends ConsumerState<LoginPage>
+class _LoginPageState extends ConsumerState<LoginPage> 
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-
+  
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -32,29 +33,25 @@ class _LoginPageState extends ConsumerState<LoginPage>
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-
+    
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0)
         .animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-
+    
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-
+    
     _controller.forward();
-  }
-
-  Future<void> _handleLogin() async {
-    final authState = ref.read(authProvider.notifier);
-    await authState.login(
-      _emailController.text,
-      _passwordController.text,
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
+    ref.listen<AuthState>(authProvider, (previous, current) {
+      if (current.isAuthenticated) {
+        context.go('/home');
+      }
+    });
 
     return Scaffold(
       body: Container(
@@ -63,8 +60,8 @@ class _LoginPageState extends ConsumerState<LoginPage>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Theme.of(context).primaryColor.withOpacity(0.8),
-              Theme.of(context).colorScheme.secondary.withOpacity(0.9),
+              Theme.of(context).primaryColor.withAlpha(204),
+              Theme.of(context).colorScheme.secondary.withAlpha(230),
             ],
           ),
         ),
@@ -73,13 +70,16 @@ class _LoginPageState extends ConsumerState<LoginPage>
             child: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildLogo(),
-                    const SizedBox(height: 48),
-                    _buildLoginCard(authState),
-                  ],
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLogo(),
+                      const SizedBox(height: 48),
+                      _buildLoginCard(),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -104,7 +104,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withAlpha(26),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -138,16 +138,18 @@ class _LoginPageState extends ConsumerState<LoginPage>
     );
   }
 
-  Widget _buildLoginCard(AuthState authState) {
+  Widget _buildLoginCard() {
+    final authState = ref.watch(authProvider);
+    
     return Container(
       constraints: const BoxConstraints(maxWidth: 400),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withAlpha(38),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha(26),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -191,8 +193,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
             _buildForgotPassword(),
             const SizedBox(height: 32),
             if (authState.isLoading)
-              const Center(
-                  child: CircularProgressIndicator(color: Colors.white))
+              const Center(child: CircularProgressIndicator(color: Colors.white))
             else
               _buildLoginButton(),
             const SizedBox(height: 24),
@@ -213,10 +214,19 @@ class _LoginPageState extends ConsumerState<LoginPage>
     required String label,
     bool isPassword = false,
   }) {
-    return TextField(
+    return TextFormField(
       controller: controller,
       obscureText: isPassword && !_isPasswordVisible,
       style: const TextStyle(color: Colors.white),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'This field is required';
+        }
+        if (label == 'Email' && !value.contains('@')) {
+          return 'Please enter a valid email';
+        }
+        return null;
+      },
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: Colors.white70),
         suffixIcon: isPassword
@@ -254,27 +264,19 @@ class _LoginPageState extends ConsumerState<LoginPage>
     );
   }
 
-  Widget _buildForgotPassword() {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: TextButton(
-        onPressed: () {
-          // Implement forgot password
-        },
-        child: const Text(
-          'Forgot Password?',
-          style: TextStyle(color: Colors.white70),
-        ),
-      ),
-    );
-  }
-
   Widget _buildLoginButton() {
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: _handleLogin,
+        onPressed: () async {
+          if (_formKey.currentState!.validate()) {
+            await ref.read(authProvider.notifier).login(
+              _emailController.text,
+              _passwordController.text,
+            );
+          }
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
           foregroundColor: Theme.of(context).primaryColor,
@@ -289,6 +291,19 @@ class _LoginPageState extends ConsumerState<LoginPage>
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildForgotPassword() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: TextButton(
+        onPressed: () {},
+        child: const Text(
+          'Forgot Password?',
+          style: TextStyle(color: Colors.white70),
         ),
       ),
     );
@@ -316,23 +331,19 @@ class _LoginPageState extends ConsumerState<LoginPage>
       children: [
         _buildSocialButton(
           icon: FontAwesomeIcons.google,
-          onPressed: () {
-            // Implement Google login
-          },
+          onPressed: () {},
         ),
         const SizedBox(width: 16),
         _buildSocialButton(
           icon: FontAwesomeIcons.apple,
-          onPressed: () {
-            // Implement Apple login
-          },
+          onPressed: () {},
         ),
       ],
     );
   }
 
   Widget _buildSocialButton({
-    required IconData icon, // Changed from String to IconData
+    required IconData icon,
     required VoidCallback onPressed,
   }) {
     return Container(
@@ -344,12 +355,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
       ),
       child: IconButton(
         onPressed: onPressed,
-        icon: FaIcon(
-          // Using FaIcon instead of Image.asset
-          icon,
-          color: Colors.white,
-          size: 24,
-        ),
+        icon: FaIcon(icon, color: Colors.white),
       ),
     );
   }
@@ -375,7 +381,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
       ],
     );
   }
-  
+
   @override
   void dispose() {
     _controller.dispose();
