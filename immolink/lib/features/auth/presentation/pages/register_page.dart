@@ -47,6 +47,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 600;
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -54,21 +57,29 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Theme.of(context).primaryColor.withOpacity(0.8),
-              Theme.of(context).colorScheme.secondary.withOpacity(0.9),
+              Theme.of(context).primaryColor.withAlpha(204),
+              Theme.of(context).colorScheme.secondary.withAlpha(230),
             ],
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 32),
-                  _buildRegistrationForm(),
-                ],
+          child: Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isSmallScreen ? 24.0 : screenSize.width * 0.1,
+                  vertical: 24.0,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 600),
+                  child: Column(
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 32),
+                      _buildRegistrationForm(),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -112,61 +123,83 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
   }
 
   Widget _buildRegistrationForm() {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 400),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isSmallScreen = constraints.maxWidth < 600;
+        
+        return Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(isSmallScreen ? 24.0 : 32.0),
+          decoration: BoxDecoration(
+            color: Colors.white.withAlpha(38),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(26),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTextField(
-              controller: _fullNameController,
-              icon: Icons.person_outline,
-              label: 'Full Name',
-            ),
-            const SizedBox(height: 24),
-            _buildTextField(
-              controller: _emailController,
-              icon: Icons.email_outlined,
-              label: 'Email',
-            ),
-            const SizedBox(height: 24),
-            _buildDatePicker(),
-            const SizedBox(height: 24),
-            _buildRoleSelector(),
-            const SizedBox(height: 24),
-            _buildTextField(
-              controller: _passwordController,
-              icon: Icons.lock_outline,
-              label: 'Password',
-              isPassword: true,
-            ),
-            const SizedBox(height: 24),
-            _buildTextField(
-              controller: _confirmPasswordController,
-              icon: Icons.lock_outline,
-              label: 'Confirm Password',
-              isPassword: true,
-            ),
-            const SizedBox(height: 32),
-            _buildRegisterButton(),
-            const SizedBox(height: 24),
-            _buildLoginLink(),
-          ],
-        ),
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (!isSmallScreen)
+                Row(
+                  children: [
+                    Expanded(child: _buildTextField(
+                      controller: _fullNameController,
+                      icon: Icons.person_outline,
+                      label: 'Full Name',
+                    )),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildTextField(
+                      controller: _emailController,
+                      icon: Icons.email_outlined,
+                      label: 'Email',
+                    )),
+                  ],
+                )
+              else ...[
+                _buildTextField(
+                  controller: _fullNameController,
+                  icon: Icons.person_outline,
+                  label: 'Full Name',
+                ),
+                const SizedBox(height: 24),
+                _buildTextField(
+                  controller: _emailController,
+                  icon: Icons.email_outlined,
+                  label: 'Email',
+                ),
+              ],
+              const SizedBox(height: 24),
+              _buildDatePicker(),
+              const SizedBox(height: 24),
+              _buildRoleSelector(),
+              const SizedBox(height: 24),
+              _buildTextField(
+                controller: _passwordController,
+                icon: Icons.lock_outline,
+                label: 'Password',
+                isPassword: true,
+              ),
+              const SizedBox(height: 24),
+              _buildTextField(
+                controller: _confirmPasswordController,
+                icon: Icons.lock_outline,
+                label: 'Confirm Password',
+                isPassword: true,
+              ),
+              const SizedBox(height: 32),
+              _buildRegisterButton(),
+              const SizedBox(height: 24),
+              _buildLoginLink(),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -201,9 +234,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
       onTap: () async {
         final date = await showDatePicker(
           context: context,
-          initialDate: DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
-          firstDate: DateTime.now().subtract(const Duration(days: 36500)), // 100 years ago
-          lastDate: DateTime.now().subtract(const Duration(days: 6570)), // 18 years ago
+          initialDate: DateTime.now().subtract(const Duration(days: 6570)),
+          firstDate: DateTime.now().subtract(const Duration(days: 36500)),
+          lastDate: DateTime.now().subtract(const Duration(days: 6570)),
         );
         if (date != null) {
           setState(() => _selectedDate = date);
@@ -263,7 +296,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
               color: isSelected ? Colors.white : Colors.white30,
             ),
             borderRadius: BorderRadius.circular(12),
-            color: isSelected ? Colors.white.withOpacity(0.1) : null,
+            color: isSelected ? Colors.white.withAlpha(26) : null,
           ),
           child: Center(
             child: Text(

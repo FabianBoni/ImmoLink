@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import './auth_provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -362,7 +363,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
           style: TextStyle(color: Colors.white70),
         ),
         TextButton(
-          onPressed: () => Navigator.pushNamed(context, '/register'),
+          onPressed: () => context.push('/register'),
           child: const Text(
             'Register',
             style: TextStyle(
@@ -374,7 +375,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
       ],
     );
   }
-
+  
   @override
   void dispose() {
     _controller.dispose();
