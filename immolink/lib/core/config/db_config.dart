@@ -1,4 +1,7 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class DbConfig {
-  static const String connectionUri = 'mongodb+srv://<immolink_service>:<CekXrtrJhJLj4sWx>@cluster0.h6adx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-  static const String dbName = 'immolink_db';
+  static String get connectionUri => dotenv.env['MONGODB_URI'] ?? '';
+  static String get dbName => dotenv.env['MONGODB_DB_NAME'] ?? '';
+  static String get apiUrl => dotenv.env['API_URL'] ?? '';
 }

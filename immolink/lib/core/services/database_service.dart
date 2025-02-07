@@ -1,26 +1,18 @@
-import 'package:mongo_dart/mongo_dart.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'database_interface.dart';
+import 'web_database_service.dart';
+import 'mobile_database_service.dart';
 import '../config/db_config.dart';
-import 'package:logging/logging.dart';
 
 class DatabaseService {
-  static Db? _db;
-  static final _log = Logger('DatabaseService');
+  static final IDatabaseService _instance = _createInstance();
   
-  static Future<void> connect() async {
-    try {
-      _db = await Db.create(DbConfig.connectionUri);
-      await _db!.open();
-      _log.info('Connected to MongoDB!');
-    } catch (e) {
-      _log.severe('Error connecting to MongoDB: $e');
-      rethrow; // Allow caller to handle the error
+  static IDatabaseService _createInstance() {
+    if (kIsWeb) {
+      return WebDatabaseService(apiBaseUrl: DbConfig.apiUrl);
     }
+    return MobileDatabaseService();
   }
-
-  static Db? get database => _db;
   
-  static Future<void> disconnect() async {
-    await _db?.close();
-    _log.info('Disconnected from MongoDB');
-  }
+  static IDatabaseService get instance => _instance;
 }

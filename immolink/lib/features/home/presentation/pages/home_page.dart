@@ -1,36 +1,58 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart' as flutter;
-import 'package:flutter/widgets.dart' as widgets show Center;
-import 'package:mongo_dart/mongo_dart.dart';
+import 'package:go_router/go_router.dart';
 import '../../data/repositories/user_repository.dart';
 import '../../data/models/user_model.dart';
+import '../../../auth/data/repositories/auth_repository.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  flutter.State<HomePage> createState() => _HomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends flutter.State<HomePage> {
+class _HomePageState extends State<HomePage> {
   final UserRepository _userRepository = UserRepository();
+  final AuthRepository _authRepository = AuthRepository();
   UserModel? currentUser;
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _checkAuthAndLoadUser();
   }
 
-  Future<void> _loadUserData() async {
-    final user = await _userRepository.getUser(ObjectId.fromHexString('your-user-id'));
-    setState(() {
-      currentUser = user;
-    });
+  Future<void> _checkAuthAndLoadUser() async {
+    final userId = await _authRepository.getCurrentUserId();
+    
+    if (userId == null) {
+      // User not logged in, redirect to login
+      if (mounted) {
+        context.go('/login');
+      }
+      return;
+    }
+
+    // Load user data using session ID
+    final user = await _userRepository.getUser(userId);
+    if (mounted) {
+      setState(() {
+        currentUser = user;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Show loading while checking auth
+    if (currentUser == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
@@ -45,7 +67,6 @@ class _HomePageState extends flutter.State<HomePage> {
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
-
   Widget _buildWelcomeSection() {
     return Container(
       height: 220,
@@ -61,7 +82,7 @@ class _HomePageState extends flutter.State<HomePage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Welcome ${currentUser?.name ?? ""}',
+                  'Welcome ${currentUser?.fullName ?? ""}',
                   style: const TextStyle(
                     fontSize: 18,
                     fontFamily: 'Poppins',
@@ -215,7 +236,7 @@ class _HomePageState extends flutter.State<HomePage> {
     return Container(
       height: 200,
       padding: const EdgeInsets.all(20),
-      child: const widgets.Center(
+      child: const Center(
         child: Text('Property Section - Coming Soon'),
       ),
     );
@@ -225,7 +246,7 @@ class _HomePageState extends flutter.State<HomePage> {
     return Container(
       height: 200,
       padding: const EdgeInsets.all(20),
-      child: const widgets.Center(
+      child: const Center(
         child: Text('Recent Activity - Coming Soon'),
       ),
     );
