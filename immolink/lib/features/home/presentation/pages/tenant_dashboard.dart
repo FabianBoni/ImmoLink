@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:ui';
 
 class TenantDashboard extends ConsumerStatefulWidget {
   const TenantDashboard({super.key});
@@ -12,92 +11,90 @@ class TenantDashboard extends ConsumerStatefulWidget {
 class _TenantDashboardState extends ConsumerState<TenantDashboard> {
   int _selectedIndex = 0;
 
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'Good morning';
+    } else if (hour < 17) {
+      return 'Good afternoon';
+    }
+    return 'Good evening';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Theme.of(context).primaryColor.withAlpha(204),
-              Theme.of(context).colorScheme.secondary.withAlpha(230),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(height: 20),
                 _buildHeader(),
+                const SizedBox(height: 30),
+                _buildSearchBar(),
+                const SizedBox(height: 30),
                 _buildPropertyCard(),
+                const SizedBox(height: 30),
                 _buildQuickActions(),
+                const SizedBox(height: 30),
                 _buildRecentActivity(),
               ],
             ),
           ),
         ),
       ),
-      bottomNavigationBar: _buildGlassBottomNav(),
+      bottomNavigationBar: _buildBottomNav(),
     );
   }
 
   Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Welcome back',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: 16,
-                    ),
-                  ),
-                  const Text(
-                    'John Doe',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _getGreeting(),
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 16,
               ),
-              _buildProfileAvatar(),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Guest User',  // Default value when no user is logged in
+              style: TextStyle(
+                color: Colors.grey[900],
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(12),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
             ],
           ),
-          const SizedBox(height: 24),
-          _buildSearchBar(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileAvatar() {
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white24, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
+          child: CircleAvatar(
+            radius: 24,
+            backgroundColor: Colors.grey[50],
+            child: Icon(Icons.person_outline, color: Colors.grey[800]),
           ),
-        ],
-      ),
-      child: const CircleAvatar(
-        radius: 24,
-        backgroundColor: Colors.white10,
-        child: Icon(Icons.person_outline, color: Colors.white),
-      ),
+        ),
+      ],
     );
   }
 
@@ -105,17 +102,16 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white24),
+        border: Border.all(color: Colors.grey[200]!),
       ),
       child: TextField(
-        style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           hintText: 'Search activities...',
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+          hintStyle: TextStyle(color: Colors.grey[400]),
           border: InputBorder.none,
-          icon: Icon(Icons.search, color: Colors.white.withOpacity(0.5)),
+          icon: Icon(Icons.search, color: Colors.grey[400]),
         ),
       ),
     );
@@ -123,16 +119,21 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
 
   Widget _buildPropertyCard() {
     return Container(
-      margin: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white24),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(8),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: Image.network(
               'https://picsum.photos/400/200',
               height: 200,
@@ -145,10 +146,10 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Sunset Apartments',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.grey[900],
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -157,7 +158,7 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
                 Text(
                   '123 Main Street, Springfield',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.grey[600],
                     fontSize: 16,
                   ),
                 ),
@@ -186,9 +187,8 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withAlpha(12),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -196,15 +196,15 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
             Text(
               label,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.grey[600],
                 fontSize: 12,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               value,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: color,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -216,31 +216,29 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
   }
 
   Widget _buildQuickActions() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Quick Actions',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Quick Actions',
+          style: TextStyle(
+            color: Colors.grey[900],
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _buildActionButton('Pay Rent', Icons.payment, Colors.green),
-              const SizedBox(width: 12),
-              _buildActionButton('Report Issue', Icons.warning_rounded, Colors.orange),
-              const SizedBox(width: 12),
-              _buildActionButton('Message', Icons.message, Colors.blue),
-            ],
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            _buildActionButton('Pay Rent', Icons.payment, Colors.green),
+            const SizedBox(width: 12),
+            _buildActionButton(
+                'Report Issue', Icons.warning_rounded, Colors.orange),
+            const SizedBox(width: 12),
+            _buildActionButton('Message', Icons.message, Colors.blue),
+          ],
+        ),
+      ],
     );
   }
 
@@ -249,9 +247,15 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white24),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(8),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -259,8 +263,8 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
             const SizedBox(height: 8),
             Text(
               label,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: Colors.grey[800],
                 fontSize: 14,
               ),
             ),
@@ -271,37 +275,34 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
   }
 
   Widget _buildRecentActivity() {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Recent Activity',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Recent Activity',
+          style: TextStyle(
+            color: Colors.grey[900],
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 16),
-          _buildActivityItem(
-            'Rent Payment',
-            'Payment processed successfully',
-            Icons.payment,
-            Colors.green,
-            '2h ago',
-          ),
-          const SizedBox(height: 12),
-          _buildActivityItem(
-            'Maintenance Request',
-            'Water leak reported in kitchen',
-            Icons.build,
-            Colors.orange,
-            '1d ago',
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+        _buildActivityItem(
+          'Rent Payment',
+          'Payment processed successfully',
+          Icons.payment,
+          Colors.green,
+          '2h ago',
+        ),
+        const SizedBox(height: 12),
+        _buildActivityItem(
+          'Maintenance Request',
+          'Water leak reported in kitchen',
+          Icons.build,
+          Colors.orange,
+          '1d ago',
+        ),
+      ],
     );
   }
 
@@ -315,16 +316,22 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(8),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withAlpha(12),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color),
@@ -336,8 +343,8 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Colors.grey[900],
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -345,7 +352,7 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
                 Text(
                   description,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.grey[600],
                     fontSize: 14,
                   ),
                 ),
@@ -355,7 +362,7 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
           Text(
             time,
             style: TextStyle(
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.grey[400],
               fontSize: 12,
             ),
           ),
@@ -364,27 +371,28 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
     );
   }
 
-  Widget _buildGlassBottomNav() {
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          height: 80,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
-            border: Border(top: BorderSide(color: Colors.white.withOpacity(0.2))),
+  Widget _buildBottomNav() {
+    return Container(
+      height: 80,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(8),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.home, 'Home', 0),
-              _buildNavItem(Icons.message, 'Messages', 1),
-              _buildNavItem(Icons.build, 'Maintenance', 2),
-              _buildNavItem(Icons.payment, 'Payments', 3),
-              _buildNavItem(Icons.person, 'Profile', 4),
-            ],
-          ),
-        ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildNavItem(Icons.home, 'Home', 0),
+          _buildNavItem(Icons.message, 'Messages', 1),
+          _buildNavItem(Icons.build, 'Maintenance', 2),
+          _buildNavItem(Icons.payment, 'Payments', 3),
+          _buildNavItem(Icons.person, 'Profile', 4),
+        ],
       ),
     );
   }
@@ -398,14 +406,17 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
         children: [
           Icon(
             icon,
-            color: isSelected ? Colors.white : Colors.white60,
+            color:
+                isSelected ? Theme.of(context).primaryColor : Colors.grey[400],
             size: 28,
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.white60,
+              color: isSelected
+                  ? Theme.of(context).primaryColor
+                  : Colors.grey[400],
               fontSize: 12,
             ),
           ),

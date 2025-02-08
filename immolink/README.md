@@ -1,16 +1,58 @@
-# immolink
+# ImmoLink
 
-A new Flutter project.
+A modern property management application built with Flutter that connects landlords and tenants.
+
+## Features
+
+- **User Authentication**
+  - Secure login/registration system
+  - Role-based access (Landlord/Tenant)
+  - Session management
+
+- **Landlord Dashboard**
+  - Property portfolio overview
+  - Tenant management
+  - Rent collection tracking
+  - Maintenance request handling
+  - Financial analytics
+
+- **Tenant Dashboard**
+  - Rent payment system
+  - Maintenance request submission
+  - Property information
+  - Communication with landlord
+  - Payment history
+
+## Tech Stack
+
+- Frontend: Flutter
+- Backend: Node.js with Express
+- Database: MongoDB
+- State Management: Riverpod
+- Navigation: GoRouter
+- Authentication: Firebase Auth
+- Cloud Storage: Firebase Storage
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+1. Clone the repository:
+```bash
+git clone https://github.com/FabianBoni/ImmoLink.git
+```
 
-A few resources to get you started if this is your first Flutter project:
+2. Install dependencies:
+```bash
+flutter pub get
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+3. Set up environment variables: Create ```bashlib/config/immolink.env``` with:
+```bash
+API_URL=your_api_url
+MONGODB_URI=your_mongodb_uri
+MONGODB_DB_NAME=your_db_name
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+4. Run the app:
+```bash
+flutter run
+```
