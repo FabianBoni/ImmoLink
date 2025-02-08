@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:immolink/features/auth/presentation/providers/auth_provider.dart';
+import 'dart:ui';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -16,7 +17,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Check auth state after first build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkAuth();
     });
@@ -32,151 +32,123 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildWelcomeSection(),
-            _buildQuickAccessSection(),
-            _buildPropertySection(),
-            _buildRecentActivitySection(),
-          ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).primaryColor.withAlpha(204),
+              Theme.of(context).colorScheme.secondary.withAlpha(230),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildHeader(),
+                _buildQuickAccessGrid(),
+                _buildPropertyShowcase(),
+                _buildActivityFeed(),
+              ],
+            ),
+          ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: _buildGlassBottomNav(),
     );
   }
 
-  Widget _buildWelcomeSection() {
+  Widget _buildHeader() {
     return Container(
-      height: 220,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      color: Colors.white,
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 52),
-          SizedBox(
-            height: 36,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Welcome back',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontFamily: 'Poppins',
-                    color: Color(0xFF000000),
-                  ),
-                ),
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: ShapeDecoration(
-                    color: const Color(0xFFD8CCC4),
-                    shape: RoundedRectangleBorder(
-                      side: const BorderSide(color: Color(0xFF614E40)),
-                      borderRadius: BorderRadius.circular(18),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Welcome back',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 16,
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            height: 43,
-            decoration: ShapeDecoration(
-              shape: RoundedRectangleBorder(
-                side: const BorderSide(color: Color(0xFFBCC1CA)),
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-            child: const Row(
-              children: [
-                SizedBox(width: 16),
-                Icon(Icons.search, color: Color(0xFFBCC1CA)),
-                SizedBox(width: 12),
-                Text(
-                  'Search your activities...',
-                  style: TextStyle(
-                    color: Color(0xFFBCC1CA),
-                    fontSize: 16,
-                    fontFamily: 'Open Sans',
+                  const Text(
+                    'John Doe',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white24),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 13),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildTabButton('Notifications', true),
-              _buildTabButton('Recent Activity', false),
+                child: const Icon(Icons.notifications_outlined, color: Colors.white),
+              ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabButton(String text, bool isSelected) {
-    return SizedBox(
-      width: 115,
-      height: 52,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            text,
-            style: TextStyle(
-              color: isSelected
-                  ? const Color(0xFF614E40)
-                  : const Color(0xFF565E6C),
-              fontSize: 14,
-              fontFamily: 'Open Sans',
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white24),
             ),
-          ),
-          if (isSelected)
-            Container(
-              height: 4,
-              margin: const EdgeInsets.only(top: 12),
-              decoration: ShapeDecoration(
-                color: const Color(0xFF614E40),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(2),
-                ),
+            child: TextField(
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: 'Search properties...',
+                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                border: InputBorder.none,
+                icon: Icon(Icons.search, color: Colors.white.withOpacity(0.5)),
               ),
             ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildQuickAccessSection() {
+  Widget _buildQuickAccessGrid() {
     return Container(
-      height: 111,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      color: Colors.white,
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Quick Access',
+            'Quick Actions',
             style: TextStyle(
+              color: Colors.white,
               fontSize: 20,
-              fontFamily: 'Poppins',
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 15),
-          Row(
+          const SizedBox(height: 16),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
             children: [
-              _buildQuickAccessButton('Pay Rent', Icons.payment),
-              const SizedBox(width: 5),
-              _buildQuickAccessButton('Report Issue', Icons.report_problem),
-              const SizedBox(width: 5),
-              _buildQuickAccessButton('Message Landlord', Icons.message),
+              _buildQuickAccessCard('My Properties', Icons.home_work, Colors.blue),
+              _buildQuickAccessCard('Messages', Icons.message, Colors.green),
+              _buildQuickAccessCard('Payments', Icons.payment, Colors.orange),
+              _buildQuickAccessCard('Documents', Icons.description, Colors.purple),
             ],
           ),
         ],
@@ -184,26 +156,31 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildQuickAccessButton(String text, IconData icon) {
+  Widget _buildQuickAccessCard(String title, IconData icon, Color color) {
     return Container(
-      height: 36,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: ShapeDecoration(
-        color: const Color(0xFF614E40),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white24),
       ),
-      child: Row(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: Colors.white, size: 16),
-          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.white, size: 32),
+          ),
+          const SizedBox(height: 12),
           Text(
-            text,
+            title,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 14,
-              fontFamily: 'Open Sans',
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -211,90 +188,209 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildPropertySection() {
+  Widget _buildPropertyShowcase() {
     return Container(
-      height: 200,
-      padding: const EdgeInsets.all(20),
-      child: const Center(
-        child: Text('Property Section - Coming Soon'),
-      ),
-    );
-  }
-
-  Widget _buildRecentActivitySection() {
-    return Container(
-      height: 200,
-      padding: const EdgeInsets.all(20),
-      child: const Center(
-        child: Text('Recent Activity - Coming Soon'),
-      ),
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return SizedBox(
-      width: 370,
-      height: 52,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildNavItem('Home', Icons.home, _selectedIndex == 0),
-          _buildNavItem('Messages', Icons.message, _selectedIndex == 1),
-          _buildNavItem('Maintenance', Icons.build, _selectedIndex == 2),
-          _buildNavItem('Payments', Icons.payment, _selectedIndex == 3),
-          _buildNavItem('Profile', Icons.person, _selectedIndex == 4),
+          const Text(
+            'Featured Properties',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: 5,
+              itemBuilder: (context, index) => _buildPropertyCard(),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(String label, IconData icon, bool isSelected) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedIndex = [
-            'Home',
-            'Messages',
-            'Maintenance',
-            'Payments',
-            'Profile'
-          ].indexOf(label);
-        });
-      },
-      child: Container(
-        width: 74,
-        height: 52,
-        decoration: ShapeDecoration(
-          color: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
+  Widget _buildPropertyCard() {
+    return Container(
+      width: 280,
+      margin: const EdgeInsets.only(right: 16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            child: Image.network(
+              'https://picsum.photos/280/120',
+              height: 120,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Modern Apartment',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'New York, USA',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityFeed() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Recent Activity',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildActivityCard(
+            'New Message',
+            'John regarding House #123',
+            Icons.message,
+            Colors.blue,
+          ),
+          const SizedBox(height: 12),
+          _buildActivityCard(
+            'Payment Received',
+            'Monthly rent for Apartment 4B',
+            Icons.payment,
+            Colors.green,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityCard(String title, String subtitle, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: Colors.white),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlassBottomNav() {
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          height: 80,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            border: Border(top: BorderSide(color: Colors.white.withOpacity(0.2))),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(Icons.home, 'Home', 0),
+              _buildNavItem(Icons.message, 'Messages', 1),
+              _buildNavItem(Icons.add_circle_outline, 'Add', 2),
+              _buildNavItem(Icons.favorite_border, 'Favorites', 3),
+              _buildNavItem(Icons.person_outline, 'Profile', 4),
+            ],
           ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 24,
-              color: isSelected
-                  ? const Color(0xFF614E40)
-                  : const Color(0xFF565E6C),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, int index) {
+    final isSelected = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedIndex = index),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            color: isSelected ? Colors.white : Colors.white60,
+            size: 28,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.white60,
+              fontSize: 12,
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected
-                    ? const Color(0xFF614E40)
-                    : const Color(0xFF565E6C),
-                fontSize: 10,
-                fontFamily: 'Open Sans',
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
-                height: 1.60,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
