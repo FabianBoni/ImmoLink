@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:ui';
+import 'package:go_router/go_router.dart';
 
 class LandlordDashboard extends ConsumerStatefulWidget {
   const LandlordDashboard({super.key});
@@ -112,40 +112,42 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
       ),
     );
   }
-    @override
-    Widget build(BuildContext context) {
-      return Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 20),
-                  _buildHeader(),
-                  const SizedBox(height: 30),
-                  _buildSearchBar(),
-                  const SizedBox(height: 30),
-                  _buildPropertyOverview(),
-                  const SizedBox(height: 30),
-                  _buildQuickAccess(),
-                  const SizedBox(height: 30),
-                  _buildRecentMessages(),
-                  const SizedBox(height: 30),
-                  _buildMaintenanceRequests(),
-                  const SizedBox(height: 30),
-                  _buildFinancialOverview(),
-                  const SizedBox(height: 30),
-                ],
-              ),
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                _buildHeader(),
+                const SizedBox(height: 30),
+                _buildSearchBar(),
+                const SizedBox(height: 30),
+                _buildPropertyOverview(),
+                const SizedBox(height: 30),
+                _buildQuickAccess(),
+                const SizedBox(height: 30),
+                _buildRecentMessages(),
+                const SizedBox(height: 30),
+                _buildMaintenanceRequests(),
+                const SizedBox(height: 30),
+                _buildFinancialOverview(),
+                const SizedBox(height: 30),
+              ],
             ),
           ),
         ),
-        bottomNavigationBar: _buildGlassBottomNav(),
-      );
-    }
+      ),
+      bottomNavigationBar: _buildGlassBottomNav(),
+    );
+  }
+
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -156,7 +158,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
             Text(
               'Welcome back',
               style: TextStyle(
-                color: Colors.black.withOpacity(0.8),
+                color: Colors.black.withAlpha(80),
                 fontSize: 16,
               ),
             ),
@@ -177,7 +179,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withAlpha(10),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -201,7 +203,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha(10),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -260,7 +262,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha(10),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -284,14 +286,14 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
                 Text(
                   'Occupancy: $occupancy',
                   style: TextStyle(
-                    color: const Color(0xFF2D3142).withOpacity(0.7),
+                    color: const Color(0xFF2D3142).withAlpha(70),
                     fontSize: 16,
                   ),
                 ),
                 Text(
                   'Rent Collected: $rentCollected',
                   style: TextStyle(
-                    color: const Color(0xFF2D3142).withOpacity(0.7),
+                    color: const Color(0xFF2D3142).withAlpha(70),
                     fontSize: 16,
                   ),
                 ),
@@ -308,6 +310,19 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+      String label, IconData icon, VoidCallback onPressed) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
@@ -346,6 +361,12 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
             ),
           ],
         ),
+        const SizedBox(height: 16),
+        _buildActionButton(
+          'Message Tenants',
+          Icons.message,
+          () => context.push('/conversations'),
+        ),
       ],
     );
   }
@@ -368,7 +389,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withAlpha(10),
                   blurRadius: 15,
                   offset: const Offset(0, 8),
                 ),
@@ -413,7 +434,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withAlpha(10),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -445,7 +466,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: const Color(0xFF4A90E2).withOpacity(0.1),
+            backgroundColor: const Color(0xFF4A90E2).withAlpha(10),
             child: Text(
               sender[0],
               style: const TextStyle(
@@ -470,7 +491,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
                 Text(
                   message,
                   style: TextStyle(
-                    color: const Color(0xFF2D3142).withOpacity(0.7),
+                    color: const Color(0xFF2D3142).withAlpha(70),
                     fontSize: 14,
                   ),
                 ),
@@ -508,7 +529,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withAlpha(10),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -549,7 +570,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: priorityColor.withOpacity(0.1),
+              color: priorityColor.withAlpha(10),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -573,7 +594,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
                 Text(
                   location,
                   style: TextStyle(
-                    color: const Color(0xFF2D3142).withOpacity(0.7),
+                    color: const Color(0xFF2D3142).withAlpha(70),
                     fontSize: 14,
                   ),
                 ),
@@ -586,7 +607,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
               vertical: 6,
             ),
             decoration: BoxDecoration(
-              color: priorityColor.withOpacity(0.1),
+              color: priorityColor.withAlpha(10),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class TenantDashboard extends ConsumerStatefulWidget {
   const TenantDashboard({super.key});
@@ -235,7 +236,11 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
             _buildActionButton(
                 'Report Issue', Icons.warning_rounded, Colors.orange),
             const SizedBox(width: 12),
-            _buildActionButton('Message', Icons.message, Colors.blue),
+            _buildActionButton(
+              'Message Landlord',
+              Icons.message,
+              Colors.blue,
+            ),
           ],
         ),
       ],
@@ -387,36 +392,39 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildNavItem(Icons.home, 'Home', 0),
-          _buildNavItem(Icons.message, 'Messages', 1),
-          _buildNavItem(Icons.build, 'Maintenance', 2),
-          _buildNavItem(Icons.payment, 'Payments', 3),
-          _buildNavItem(Icons.person, 'Profile', 4),
+          _buildNavItem(Icons.home, 'Home', 0, context),
+          _buildNavItem(Icons.message, 'Messages', 1, context),
+          _buildNavItem(Icons.build, 'Maintenance', 2, context),
+          _buildNavItem(Icons.payment, 'Payments', 3, context),
+          _buildNavItem(Icons.person, 'Profile', 4, context),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int index) {
+  Widget _buildNavItem(IconData icon, String label, int index, BuildContext context) {
     final isSelected = _selectedIndex == index;
     return GestureDetector(
-      onTap: () => setState(() => _selectedIndex = index),
+      onTap: () {
+        setState(() => _selectedIndex = index);
+        // Handle navigation based on index
+        if (index == 1) { // Messages tab
+          context.push('/conversations');
+        }
+      },
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
             icon,
-            color:
-                isSelected ? Theme.of(context).primaryColor : Colors.grey[400],
+            color: isSelected ? Theme.of(context).primaryColor : Colors.grey[400],
             size: 28,
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
-              color: isSelected
-                  ? Theme.of(context).primaryColor
-                  : Colors.grey[400],
+              color: isSelected ? Theme.of(context).primaryColor : Colors.grey[400],
               fontSize: 12,
             ),
           ),
