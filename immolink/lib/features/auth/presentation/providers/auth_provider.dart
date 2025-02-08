@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:immolink/features/auth/domain/services/auth_service.dart';
+import 'package:immolink/features/auth/presentation/providers/register_provider.dart';
+import 'package:immolink/features/auth/presentation/providers/user_role_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthState {
@@ -34,15 +36,22 @@ class AuthState {
   }
 }
 
-final authServiceProvider = Provider<AuthService>((ref) => AuthService());
+final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
+  return AuthNotifier(
+    ref.read(authServiceProvider),
+    ref.read(userRoleProvider.notifier),
+  );
+});
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
+  final UserRoleNotifier _userRoleNotifier;
 
-  AuthNotifier(this._authService) : super(AuthState.initial());
+  AuthNotifier(this._authService, this._userRoleNotifier) 
+      : super(AuthState.initial());
 
   Future<void> login(String email, String password) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true);
     
     try {
       final userData = await _authService.loginUser(
@@ -50,23 +59,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
         password: password,
       );
       
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('userId', userData['userId']);
-      await prefs.setString('email', userData['email']);
-      await prefs.setString('role', userData['role']);
+      await _userRoleNotifier.setUserRole(userData['role']);
       
       state = state.copyWith(
-        isLoading: false,
         isAuthenticated: true,
-        userId: userData['userId'],
-        error: null
+        isLoading: false,
       );
     } catch (e) {
-      print('Login error: $e');
       state = state.copyWith(
-        isLoading: false,
         error: e.toString(),
-        isAuthenticated: false
+        isLoading: false,
       );
     }
   }
@@ -136,7 +138,3 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 }
-
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier(ref.read(authServiceProvider));
-});
