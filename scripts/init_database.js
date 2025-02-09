@@ -1,15 +1,16 @@
 const { MongoClient } = require('mongodb');
+require('dotenv').config();
 
-const uri = 'mongodb+srv://immolink_service:CekXrtrJhJLj4sWx@cluster0.h6adx.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-const dbName = 'immolink_db';
+// Connection configuration
+const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/immolink_db';
+const dbName = process.env.DB_NAME || 'immolink_db';
 
 async function initializeDatabase() {
   const client = new MongoClient(uri);
 
   try {
     await client.connect();
-    console.log('Connected to MongoDB Atlas');
-
+    console.log('Connected to MongoDB');
     const db = client.db(dbName);
 
     // Users Collection
@@ -17,28 +18,18 @@ async function initializeDatabase() {
       validator: {
         $jsonSchema: {
           bsonType: 'object',
-          required: ['email', 'fullName', 'birthDate', 'role', 'isAdmin', 'isValidated', 'address'],
+          required: ['email', 'password', 'fullName', 'role', 'birthDate', 'isAdmin', 'isValidated'],
           properties: {
             email: {
               bsonType: 'string',
               pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'
             },
-            fullName: {
-              bsonType: 'string',
-              minLength: 2
-            },
-            birthDate: {
-              bsonType: 'date'
-            },
-            role: {
-              enum: ['landlord', 'customer']
-            },
-            isAdmin: {
-              bsonType: 'bool'
-            },
-            isValidated: {
-              bsonType: 'bool'
-            },
+            password: { bsonType: 'string' },
+            fullName: { bsonType: 'string' },
+            role: { enum: ['landlord', 'tenant'] },
+            birthDate: { bsonType: 'date' },
+            isAdmin: { bsonType: 'bool' },
+            isValidated: { bsonType: 'bool' },
             address: {
               bsonType: 'object',
               required: ['street', 'city', 'postalCode', 'country'],
@@ -59,9 +50,15 @@ async function initializeDatabase() {
       validator: {
         $jsonSchema: {
           bsonType: 'object',
-          required: ['landlordId', 'address', 'type', 'price', 'status'],
+          required: ['landlordId', 'address', 'status', 'rentAmount'],
           properties: {
             landlordId: { bsonType: 'objectId' },
+            tenantIds: { 
+              bsonType: 'array',
+              items: { bsonType: 'objectId' }
+            },
+            status: { enum: ['available', 'rented', 'maintenance'] },
+            rentAmount: { bsonType: 'double' },
             address: {
               bsonType: 'object',
               required: ['street', 'city', 'postalCode', 'country'],
@@ -72,69 +69,18 @@ async function initializeDatabase() {
                 country: { bsonType: 'string' }
               }
             },
-            type: {
-              enum: ['apartment', 'house', 'commercial']
-            },
-            price: {
-              bsonType: 'decimal'
-            },
-            status: {
-              enum: ['available', 'rented', 'maintenance']
-            },
-            amenities: {
-              bsonType: 'array',
-              items: { bsonType: 'string' }
-            }
-          }
-        }
-      }
-    });
-
-    // Service Providers Collection
-    await db.createCollection('serviceProviders', {
-      validator: {
-        $jsonSchema: {
-          bsonType: 'object',
-          required: ['name', 'services', 'contact', 'isVerified'],
-          properties: {
-            name: { bsonType: 'string' },
-            services: {
-              bsonType: 'array',
-              items: { bsonType: 'string' }
-            },
-            contact: {
+            details: {
               bsonType: 'object',
-              required: ['email', 'phone'],
+              required: ['size', 'rooms'],
               properties: {
-                email: { bsonType: 'string' },
-                phone: { bsonType: 'string' }
+                size: { bsonType: 'double' },
+                rooms: { bsonType: 'int' },
+                amenities: {
+                  bsonType: 'array',
+                  items: { bsonType: 'string' }
+                }
               }
-            },
-            isVerified: { bsonType: 'bool' },
-            rating: { bsonType: 'decimal' }
-          }
-        }
-      }
-    });
-
-    // Services Collection
-    await db.createCollection('services', {
-      validator: {
-        $jsonSchema: {
-          bsonType: 'object',
-          required: ['propertyId', 'providerId', 'type', 'status', 'scheduledDate'],
-          properties: {
-            propertyId: { bsonType: 'objectId' },
-            providerId: { bsonType: 'objectId' },
-            type: {
-              enum: ['maintenance', 'cleaning', 'repair', 'inspection']
-            },
-            status: {
-              enum: ['scheduled', 'in_progress', 'completed', 'cancelled']
-            },
-            scheduledDate: { bsonType: 'date' },
-            completionDate: { bsonType: 'date' },
-            cost: { bsonType: 'decimal' }
+            }
           }
         }
       }
@@ -143,14 +89,17 @@ async function initializeDatabase() {
     // Create indexes
     await db.collection('users').createIndex({ email: 1 }, { unique: true });
     await db.collection('properties').createIndex({ landlordId: 1 });
-    await db.collection('services').createIndex({ propertyId: 1 });
-    await db.collection('services').createIndex({ providerId: 1 });
-    await db.collection('serviceProviders').createIndex({ 'contact.email': 1 }, { unique: true });
+    await db.collection('properties').createIndex({ 'address.postalCode': 1 });
+    await db.collection('properties').createIndex({ status: 1 });
 
-    console.log('Database initialization completed successfully');
+    console.log('Database initialized successfully');
+  } catch (error) {
+    console.error('Database initialization failed:', error);
+    throw error;
   } finally {
     await client.close();
   }
 }
 
+// Execute initialization
 initializeDatabase().catch(console.error);

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:immolink/features/auth/presentation/providers/auth_provider.dart';
 import 'package:immolink/features/chat/domain/models/chat_message.dart';
 import 'package:immolink/features/chat/presentation/providers/chat_provider.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ChatPage extends ConsumerStatefulWidget {
   final String conversationId;
@@ -29,31 +30,47 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     );
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text(widget.otherUserName),
+        backgroundColor: Theme.of(context).primaryColor,
+        title: Text(
+          widget.otherUserName,
+          style: const TextStyle(color: Colors.white),
+        ),
         elevation: 1,
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: messagesStream.when(
-              data: (messages) => ListView.builder(
-                reverse: true,
-                itemCount: messages.length,
-                itemBuilder: (context, index) => _buildMessageBubble(
-                  messages[index],
+      body: Container(
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          image: DecorationImage(
+            image: const AssetImage('assets/images/chat_bg.png'),
+            opacity: 0.1,
+            repeat: ImageRepeat.repeat,
+          ),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: messagesStream.when(
+                data: (messages) => ListView.builder(
+                  reverse: true,
+                  itemCount: messages.length,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  itemBuilder: (context, index) => _buildMessageBubble(
+                    messages[index],
+                  ),
+                ),
+                loading: () => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                error: (error, stack) => Center(
+                  child: Text('Error: $error'),
                 ),
               ),
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
-              ),
-              error: (error, stack) => Center(
-                child: Text('Error: $error'),
-              ),
             ),
-          ),
-          _buildMessageInput(),
-        ],
+            _buildMessageInput(),
+          ],
+        ),
       ),
     );
   }
@@ -105,6 +122,16 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       ),
       child: Row(
         children: [
+          IconButton(
+            icon: const Icon(Icons.attach_file),
+            onPressed: _handleAttachment,
+            color: Theme.of(context).primaryColor,
+          ),
+          IconButton(
+            icon: const Icon(Icons.image),
+            onPressed: _handleImagePicker,
+            color: Theme.of(context).primaryColor,
+          ),
           Expanded(
             child: TextField(
               controller: _messageController,
@@ -123,7 +150,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.mic),
+            onPressed: _handleVoiceMemo,
+            color: Theme.of(context).primaryColor,
+          ),
           IconButton(
             onPressed: _sendMessage,
             icon: const Icon(Icons.send),
@@ -134,6 +165,27 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     );
   }
 
+  void _handleAttachment() async {
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: false,
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'doc', 'docx'],
+    );
+    if (result != null) {
+      // Handle file upload
+    }
+  }
+
+  void _handleImagePicker() async {
+    final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      // Handle image upload
+    }
+  }
+
+  void _handleVoiceMemo() {
+    // Implement voice memo recording
+  }
   void _sendMessage() {
     if (_messageController.text.trim().isEmpty) return;
 
