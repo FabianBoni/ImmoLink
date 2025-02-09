@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:immolink/features/auth/domain/models/user.dart';
 import 'package:immolink/features/auth/domain/services/auth_service.dart';
 import 'package:immolink/features/auth/presentation/providers/register_provider.dart';
 import 'package:immolink/features/auth/presentation/providers/user_role_provider.dart';
@@ -35,6 +36,8 @@ class AuthState {
     );
   }
 }
+
+final currentUserProvider = StateProvider<User?>((ref) => null);
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(

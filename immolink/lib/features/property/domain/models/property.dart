@@ -6,6 +6,7 @@ class Property {
   final String status;
   final double rentAmount;
   final PropertyDetails details;
+  final double? outstandingPayments;
 
   Property({
     required this.id,
@@ -15,6 +16,7 @@ class Property {
     required this.status,
     required this.rentAmount,
     required this.details,
+    this.outstandingPayments,
   });
 
   factory Property.fromMap(Map<String, dynamic> map) {
@@ -26,10 +28,23 @@ class Property {
       status: map['status'],
       rentAmount: map['rentAmount'].toDouble(),
       details: PropertyDetails.fromMap(map['details']),
+      outstandingPayments: map['outstandingPayments']?.toDouble(),
     );
   }
-}
 
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'landlordId': landlordId,
+      'tenantIds': tenantIds,
+      'address': address.toMap(),
+      'status': status,
+      'rentAmount': rentAmount,
+      'details': details.toMap(),
+      'outstandingPayments': outstandingPayments,
+    };
+  }
+}
 class Address {
   final String street;
   final String city;
@@ -79,5 +94,13 @@ class PropertyDetails {
       rooms: map['rooms'],
       amenities: List<String>.from(map['amenities']),
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'size': size,
+      'rooms': rooms,
+      'amenities': amenities,
+    };
   }
 }

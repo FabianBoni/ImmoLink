@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:immolink/features/auth/presentation/providers/user_role_provider.dart';
-import '../providers/properties_provider.dart';
+import 'package:immolink/features/property/presentation/providers/property_providers.dart';
 import '../widgets/property_card.dart';
 import '../widgets/property_details_sheet.dart';
 import '../../domain/models/property.dart';
