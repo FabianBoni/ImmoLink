@@ -27,12 +27,7 @@ class AuthService {
           'role': role,
           'isAdmin': false,
           'isValidated': false,
-          'address': {
-            'street': '',
-            'city': '',
-            'postalCode': '',
-            'country': ''
-          }
+          'address': {'street': '', 'city': '', 'postalCode': '', 'country': ''}
         }),
       );
 
@@ -56,26 +51,33 @@ class AuthService {
       rethrow;
     }
   }
-    Future<Map<String, dynamic>> loginUser({
-      required String email,
-      required String password,
-    }) async {
-      final response = await http.post(
-        Uri.parse('$_apiUrl/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'email': email,
-          'password': password,
-        }),
-      );
 
-      print('Raw response: ${response.body}');
-  
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        // Return the entire user object
-        return data['user'];
-      }
+  Future<Map<String, dynamic>> loginUser({
+    required String email,
+    required String password,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_apiUrl/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'email': email,
+        'password': password,
+      }),
+    );
 
-      throw Exception(json.decode(response.body)['message'] ?? 'Login failed');
-    }  }
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final user = data['user'];
+      
+      return {
+        'userId': user['userId'],
+        'token': data['token'] ?? '',  // Handle optional token
+        'email': user['email'],
+        'role': user['role'],
+        'fullName': user['fullName']
+      };
+    }
+
+    throw Exception(json.decode(response.body)['message'] ?? 'Login failed');
+  }
+}

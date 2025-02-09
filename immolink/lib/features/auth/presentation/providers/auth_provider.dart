@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:immolink/features/auth/domain/models/user.dart';
 import 'package:immolink/features/auth/domain/services/auth_service.dart';
 import 'package:immolink/features/auth/presentation/providers/register_provider.dart';
-import 'package:immolink/features/auth/presentation/providers/user_role_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthState {
@@ -42,36 +41,45 @@ final currentUserProvider = StateProvider<User?>((ref) => null);
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(
     ref.read(authServiceProvider),
-    ref.read(userRoleProvider.notifier),
   );
 });
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
-  final UserRoleNotifier _userRoleNotifier;
 
-  AuthNotifier(this._authService, this._userRoleNotifier) 
+  AuthNotifier(this._authService) 
       : super(AuthState.initial());
 
   Future<void> login(String email, String password) async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, error: null);
     
     try {
       final userData = await _authService.loginUser(
-        email: email,
-        password: password,
+        email: email, 
+        password: password
       );
       
-      await _userRoleNotifier.setUserRole(userData['role']);
+      print('User data received: $userData'); // Debug log
+      
+      final prefs = await SharedPreferences.getInstance();
+      await Future.wait([
+        prefs.setString('userId', userData['userId']),
+        prefs.setString('authToken', userData['token']),
+        prefs.setString('email', userData['email']),
+        prefs.setString('userRole', userData['role'])
+      ]);
       
       state = state.copyWith(
-        isAuthenticated: true,
         isLoading: false,
+        isAuthenticated: true,
+        userId: userData['userId']
       );
     } catch (e) {
+      print('Login error: $e'); // Debug log
       state = state.copyWith(
-        error: e.toString(),
         isLoading: false,
+        error: e.toString(),
+        isAuthenticated: false
       );
     }
   }

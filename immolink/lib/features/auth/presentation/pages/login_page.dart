@@ -47,9 +47,10 @@ class _LoginPageState extends ConsumerState<LoginPage>
 
   @override
   Widget build(BuildContext context) {
+    // Listen to auth state changes
     ref.listen<AuthState>(authProvider, (previous, current) {
       if (current.isAuthenticated) {
-        context.go('/home');
+        context.go('/home');  // Navigate when authenticated
       }
     });
 
@@ -88,7 +89,6 @@ class _LoginPageState extends ConsumerState<LoginPage>
       ),
     );
   }
-
   Widget _buildLogo() {
     return FadeTransition(
       opacity: _fadeAnimation,

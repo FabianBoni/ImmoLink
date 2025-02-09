@@ -1,4 +1,5 @@
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/property.dart';
 import 'package:immolink/core/config/db_config.dart';
@@ -7,17 +8,37 @@ class PropertyService {
   final String _apiUrl = DbConfig.apiUrl;
 
   Future<void> addProperty(Property property) async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Debug session state
+    print('Session variables:');
+    print('userId: ${prefs.getString('userId')}');
+    print('authToken: ${prefs.getString('authToken')}');
+    print('userRole: ${prefs.getString('userRole')}');
+    print('email: ${prefs.getString('email')}');
+    
+    final userId = prefs.getString('userId') ?? 
+      (throw Exception('User not authenticated'));
+
+    final propertyData = {
+      ...property.toMap(),
+      'landlordId': userId,
+    };
+
+    print('Property data to send: ${json.encode(propertyData)}');
+    
+    // Continue with property creation...
     final response = await http.post(
       Uri.parse('$_apiUrl/properties'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(property.toMap()),
+      body: json.encode(propertyData),
     );
 
     if (response.statusCode != 201) {
-      throw Exception('Failed to add property');
+      print('Server response: ${response.body}');
+      throw Exception('Failed to add property: ${response.statusCode}');
     }
   }
-
   Stream<List<Property>> getLandlordProperties(String landlordId) async* {
     final response = await http.get(
       Uri.parse('$_apiUrl/properties/landlord/$landlordId'),

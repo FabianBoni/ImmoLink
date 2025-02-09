@@ -11,7 +11,7 @@ class WebDatabaseService implements IDatabaseService {
   @override
   Future<void> connect() async {
     try {
-      print('Attempting to connect to: $apiBaseUrl/health');
+      print('Connecting to API at: $apiBaseUrl');
       
       final response = await http.get(
         Uri.parse('$apiBaseUrl/health'),
@@ -21,18 +21,21 @@ class WebDatabaseService implements IDatabaseService {
         },
       );
       
-      print('Health check response: ${response.statusCode}');
+      print('Health check response status: ${response.statusCode}');
       print('Response body: ${response.body}');
     
       if (response.statusCode != 200) {
-        throw DatabaseException('API connection failed with status: ${response.statusCode}');
+        throw DatabaseException(
+          'API connection failed: Status ${response.statusCode}\n'
+          'Response: ${response.body}'
+        );
       }
     } on http.ClientException catch (e) {
-      print('Network error: ${e.toString()}');
-      throw DatabaseException('Connection failed: Network error - ${e.toString()}');
+      print('Network error details: $e');
+      throw DatabaseException('Network connection failed: ${e.message}');
     } catch (e) {
-      print('Unexpected error: ${e.toString()}');
-      throw DatabaseException('Connection failed: ${e.toString()}');
+      print('Unexpected error: $e');
+      throw DatabaseException('Connection failed: $e');
     }
   }
 
@@ -43,7 +46,7 @@ class WebDatabaseService implements IDatabaseService {
   Future<dynamic> query(String collection, Map<String, dynamic> filter) async {
     try {
       final response = await http.post(
-        Uri.parse('$apiBaseUrl/$collection/query'),
+        Uri.parse('$apiBaseUrl/$collection'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
@@ -52,12 +55,15 @@ class WebDatabaseService implements IDatabaseService {
       );
 
       if (response.statusCode != 200) {
-        throw DatabaseException('Query failed with status: ${response.statusCode}');
+        throw DatabaseException(
+          'Query failed: Status ${response.statusCode}\n'
+          'Response: ${response.body}'
+        );
       }
 
       return json.decode(response.body);
     } catch (e) {
-      throw DatabaseException('Query failed: ${e.toString()}');
+      throw DatabaseException('Query operation failed: $e');
     }
   }
 }

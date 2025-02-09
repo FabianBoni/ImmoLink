@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const authRoutes = require('./routes/auth');
+const propertyRoutes = require('./routes/properties');
 
 // Enable CORS for all routes
 app.use(cors({
@@ -14,11 +15,18 @@ app.use(express.json());
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'healthy' });
+  res.status(200).json({ 
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
 });
 
 // Mount auth routes
 app.use('/api/auth', authRoutes);
+
+// Mount routes
+app.use('/api/properties', propertyRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

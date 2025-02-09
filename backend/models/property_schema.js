@@ -6,28 +6,29 @@ const propertySchema = {
       properties: {
         landlordId: {
           bsonType: "string",
-          description: "must be a string and is required"
+          description: "Unique identifier for the landlord"
         },
         address: {
           bsonType: "object",
-          required: ["street", "city", "postalCode"],
+          required: ["street", "city", "postalCode", "country"],
           properties: {
             street: { bsonType: "string" },
             city: { bsonType: "string" },
-            postalCode: { bsonType: "string" }
+            postalCode: { bsonType: "string" },
+            country: { bsonType: "string" }
           }
         },
         status: {
           enum: ["available", "rented", "maintenance"],
-          description: "must be one of the allowed values"
+          description: "Property status"
         },
         rentAmount: {
           bsonType: "number",
-          minimum: 0,
-          description: "must be a positive number"
+          minimum: 0
         },
         details: {
           bsonType: "object",
+          required: ["size", "rooms", "amenities"],
           properties: {
             size: { bsonType: "number" },
             rooms: { bsonType: "number" },
@@ -36,10 +37,19 @@ const propertySchema = {
               items: { bsonType: "string" }
             }
           }
-        }
+        },
+        imageUrls: {
+          bsonType: "array",
+          items: { bsonType: "string" }
+        },
+        tenantIds: {
+          bsonType: "array",
+          items: { bsonType: "string" }
+        },
+        outstandingPayments: { bsonType: "number" },
+        createdAt: { bsonType: "date" },
+        updatedAt: { bsonType: "date" }
       }
     }
   }
-}
-
-module.exports = propertySchema
+};
