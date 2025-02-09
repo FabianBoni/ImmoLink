@@ -6,6 +6,8 @@ import 'package:immolink/features/auth/presentation/providers/auth_provider.dart
 import 'package:immolink/features/chat/presentation/pages/chat_page.dart';
 import 'package:immolink/features/chat/presentation/pages/conversations_list_page.dart';
 import 'package:immolink/features/home/presentation/pages/home_page.dart';
+import 'package:immolink/features/property/presentation/pages/add_property_page.dart';
+import 'package:immolink/features/property/presentation/pages/property_details_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -23,13 +25,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => const HomePage(),
-        redirect: (context, state) {
-          if (!authState.isAuthenticated) {
-            return '/login';
-          }
-          return null;
-        },
+        builder: (context, state) => HomePage(),
+      ),
+      GoRoute(
+        path: '/property/add',
+        builder: (context, state) => AddPropertyPage(),
+      ),
+      GoRoute(
+        path: '/property/:id',
+        builder: (context, state) => PropertyDetailsPage(
+          propertyId: state.pathParameters['id']!,
+        ),
       ),
       GoRoute(
         path: '/chat/:conversationId',
@@ -43,5 +49,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ConversationsListPage(),
       ),
     ],
+    redirect: (context, state) {
+      final isLoggingIn = state.matchedLocation == '/login';
+      final isRegistering = state.matchedLocation == '/register';
+
+      if (!authState.isAuthenticated && !isLoggingIn && !isRegistering) {
+        return '/login';
+      }
+
+      if (authState.isAuthenticated && isLoggingIn) {
+        return '/home';
+      }
+
+      return null;
+    },
   );
 });

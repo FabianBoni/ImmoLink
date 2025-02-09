@@ -26,3 +26,8 @@ final landlordPropertiesProvider = StreamProvider<List<Property>>((ref) {
   
   return Stream.value([]); // Empty list if no user
 });
+
+final propertyProvider = StreamProvider.family<Property, String>((ref, propertyId) {
+  final propertyService = ref.watch(propertyServiceProvider);
+  return propertyService.getPropertyById(propertyId);
+});

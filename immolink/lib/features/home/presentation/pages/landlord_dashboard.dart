@@ -68,7 +68,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
             Text(
               'Welcome back',
               style: TextStyle(
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withAlpha(70),
                 fontSize: 16,
               ),
             ),
@@ -100,7 +100,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha(10),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -149,7 +149,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha(10),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -173,14 +173,14 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
                 Text(
                   'Occupancy: ${property.status == "rented" ? "100%" : "0%"}',
                   style: TextStyle(
-                    color: const Color(0xFF2D3142).withOpacity(0.7),
+                    color: const Color(0xFF2D3142).withAlpha(70),
                     fontSize: 16,
                   ),
                 ),
                 Text(
                   'Rent: \$${property.rentAmount}',
                   style: TextStyle(
-                    color: const Color(0xFF2D3142).withOpacity(0.7),
+                    color: const Color(0xFF2D3142).withAlpha(70),
                     fontSize: 16,
                   ),
                 ),
@@ -220,12 +220,12 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
             _buildQuickAccessButton(
               'Add Property',
               Icons.add_home_rounded,
-              () => context.push('/add-property'),
+              () => context.push('/property/add'),
             ),
             _buildQuickAccessButton(
               'Messages',
               Icons.message_rounded,
-              () => context.push('/messages'),
+              () => context.push('/conversations'),
             ),
             _buildQuickAccessButton(
               'Reports',
@@ -257,7 +257,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withAlpha(10),
                   blurRadius: 15,
                   offset: const Offset(0, 8),
                 ),
@@ -340,7 +340,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withAlpha(10),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -372,7 +372,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+            backgroundColor: Theme.of(context).primaryColor.withAlpha(10),
             child: Text(
               sender[0],
               style: TextStyle(
@@ -421,7 +421,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
         
     final outstanding = properties
         .where((p) => p.status == 'rented')
-        .fold(0.0, (sum, p) => sum + (p.outstandingPayments ?? 0));
+        .fold(0.0, (sum, p) => sum + (p.outstandingPayments));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -473,7 +473,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withAlpha(10),
             blurRadius: 10,
           ),
         ],
@@ -483,7 +483,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withAlpha(10),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color),
@@ -523,7 +523,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withAlpha(5),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),

@@ -6,7 +6,8 @@ class Property {
   final String status;
   final double rentAmount;
   final PropertyDetails details;
-  final double? outstandingPayments;
+  final List<String> imageUrls;
+  final double outstandingPayments;  // Added field
 
   Property({
     required this.id,
@@ -16,7 +17,8 @@ class Property {
     required this.status,
     required this.rentAmount,
     required this.details,
-    this.outstandingPayments,
+    this.imageUrls = const [],
+    this.outstandingPayments = 0.0,  // Default to zero
   });
 
   factory Property.fromMap(Map<String, dynamic> map) {
@@ -28,7 +30,8 @@ class Property {
       status: map['status'],
       rentAmount: map['rentAmount'].toDouble(),
       details: PropertyDetails.fromMap(map['details']),
-      outstandingPayments: map['outstandingPayments']?.toDouble(),
+      imageUrls: List<String>.from(map['imageUrls'] ?? []),
+      outstandingPayments: map['outstandingPayments']?.toDouble() ?? 0.0,
     );
   }
 
@@ -41,11 +44,11 @@ class Property {
       'status': status,
       'rentAmount': rentAmount,
       'details': details.toMap(),
+      'imageUrls': imageUrls,
       'outstandingPayments': outstandingPayments,
     };
   }
-}
-class Address {
+}class Address {
   final String street;
   final String city;
   final String postalCode;
