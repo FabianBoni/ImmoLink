@@ -11,18 +11,17 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Listen to auth state changes
     ref.listen<AuthState>(authProvider, (previous, current) {
+      print('Auth state changed: ${current.isAuthenticated}');
       if (!current.isAuthenticated) {
         context.go('/login');
       }
     });
 
-    // Get current user role
     final userRole = ref.watch(userRoleProvider);
+    print('Current user role: $userRole');
 
-    // Return appropriate dashboard based on role
-    return userRole == 'landlord' 
+    return userRole == 'landlord'
         ? const LandlordDashboard()
         : const TenantDashboard();
   }

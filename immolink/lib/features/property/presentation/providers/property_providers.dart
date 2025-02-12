@@ -16,18 +16,19 @@ final propertiesProvider = StreamProvider<List<Property>>((ref) {
 
 // Landlord-specific properties provider
 final landlordPropertiesProvider = StreamProvider<List<Property>>((ref) {
-  final propertyService = ref.watch(propertyServiceProvider);
+  print('Provider initialized');
   final currentUser = ref.watch(currentUserProvider);
-  
-  // Get landlord-specific properties if user is authenticated
-  if (currentUser != null) {
-    return propertyService.getLandlordProperties(currentUser.id.toString());
-  }
-  
-  return Stream.value([]); // Empty list if no user
+  print('Current user in provider: ${currentUser?.id}');
+
+  if (currentUser == null) throw Exception('User not authenticated');
+
+  final propertyService = PropertyService();
+  print('Calling PropertyService.getLandlordProperties');
+  return propertyService.getLandlordProperties(currentUser.id.toString());
 });
 
-final propertyProvider = StreamProvider.family<Property, String>((ref, propertyId) {
+final propertyProvider =
+    StreamProvider.family<Property, String>((ref, propertyId) {
   final propertyService = ref.watch(propertyServiceProvider);
   return propertyService.getPropertyById(propertyId);
 });

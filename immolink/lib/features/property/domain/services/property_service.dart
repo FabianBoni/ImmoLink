@@ -9,16 +9,16 @@ class PropertyService {
 
   Future<void> addProperty(Property property) async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     // Debug session state
     print('Session variables:');
     print('userId: ${prefs.getString('userId')}');
     print('authToken: ${prefs.getString('authToken')}');
     print('userRole: ${prefs.getString('userRole')}');
     print('email: ${prefs.getString('email')}');
-    
-    final userId = prefs.getString('userId') ?? 
-      (throw Exception('User not authenticated'));
+
+    final userId = prefs.getString('userId') ??
+        (throw Exception('User not authenticated'));
 
     final propertyData = {
       ...property.toMap(),
@@ -26,7 +26,7 @@ class PropertyService {
     };
 
     print('Property data to send: ${json.encode(propertyData)}');
-    
+
     // Continue with property creation...
     final response = await http.post(
       Uri.parse('$_apiUrl/properties'),
@@ -39,15 +39,21 @@ class PropertyService {
       throw Exception('Failed to add property: ${response.statusCode}');
     }
   }
+
   Stream<List<Property>> getLandlordProperties(String landlordId) async* {
+    final idString =
+        landlordId.toString().replaceAll('ObjectId("', '').replaceAll('")', '');
+
     final response = await http.get(
-      Uri.parse('$_apiUrl/properties/landlord/$landlordId'),
+      Uri.parse('$_apiUrl/properties/landlord/$idString'),
       headers: {'Content-Type': 'application/json'},
     );
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      yield data.map((json) => Property.fromMap(json)).toList();
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      final List<dynamic> properties = responseData['properties'];
+      print('Found ${properties.length} properties');
+      yield properties.map((json) => Property.fromMap(json)).toList();
     }
   }
 

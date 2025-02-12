@@ -7,7 +7,7 @@ class Property {
   final double rentAmount;
   final PropertyDetails details;
   final List<String> imageUrls;
-  final double outstandingPayments;  // Added field
+  final double outstandingPayments; // Added field
 
   Property({
     required this.id,
@@ -18,20 +18,20 @@ class Property {
     required this.rentAmount,
     required this.details,
     this.imageUrls = const [],
-    this.outstandingPayments = 0.0,  // Default to zero
+    this.outstandingPayments = 0.0, // Default to zero
   });
 
   factory Property.fromMap(Map<String, dynamic> map) {
     return Property(
-      id: map['id'],
+      id: map['_id'].toString(), // Convert MongoDB _id to string
       landlordId: map['landlordId'],
-      tenantIds: List<String>.from(map['tenantIds']),
       address: Address.fromMap(map['address']),
       status: map['status'],
       rentAmount: map['rentAmount'].toDouble(),
       details: PropertyDetails.fromMap(map['details']),
-      imageUrls: List<String>.from(map['imageUrls'] ?? []),
-      outstandingPayments: map['outstandingPayments']?.toDouble() ?? 0.0,
+      imageUrls: List<String>.from(map['imageUrls']),
+      tenantIds: List<String>.from(map['tenantIds']),
+      outstandingPayments: map['outstandingPayments'].toDouble(),
     );
   }
 
@@ -48,7 +48,9 @@ class Property {
       'outstandingPayments': outstandingPayments,
     };
   }
-}class Address {
+}
+
+class Address {
   final String street;
   final String city;
   final String postalCode;

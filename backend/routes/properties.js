@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');  // Add ObjectId here
 const { dbUri, dbName } = require('../config');
 
 router.get('/landlord/:landlordId', async (req, res) => {
@@ -10,10 +10,17 @@ router.get('/landlord/:landlordId', async (req, res) => {
     await client.connect();
     const db = client.db(dbName);
     
+    console.log('Querying properties for landlordId:', req.params.landlordId);
     const properties = await db.collection('properties')
-      .find({ landlordId: req.params.landlordId })
+      .find({ 
+        landlordId: req.params.landlordId.toString() 
+      })
       .toArray();
       
+    console.log(req.params.landlordId.toString())
+    console.log('Found properties:', properties.length);
+    console.log('Properties details:', JSON.stringify(properties, null, 2));
+
     const propertyIds = properties.map(p => p._id);
     
     const tenants = await db.collection('users')
@@ -25,6 +32,7 @@ router.get('/landlord/:landlordId', async (req, res) => {
       
     res.json({ properties, tenants });
   } catch (error) {
+    console.error('Database error:', error);
     res.status(500).json({ message: 'Error fetching properties' });
   } finally {
     await client.close();
@@ -34,7 +42,7 @@ router.get('/landlord/:landlordId', async (req, res) => {
 // New POST route for property creation
 router.post('/', async (req, res) => {
   const client = new MongoClient(dbUri);
-  
+
   try {
     // Transform incoming data to match schema
     const propertyData = {
@@ -61,10 +69,10 @@ router.post('/', async (req, res) => {
 
     await client.connect();
     const db = client.db(dbName);
-    
+
     console.log('Final property data:', JSON.stringify(propertyData, null, 2));
     const result = await db.collection('properties').insertOne(propertyData);
-    
+
     res.status(201).json({
       success: true,
       propertyId: result.insertedId,

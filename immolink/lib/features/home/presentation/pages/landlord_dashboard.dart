@@ -14,52 +14,54 @@ class LandlordDashboard extends ConsumerStatefulWidget {
 
 class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
   int _selectedIndex = 0;
-    @override
-    Widget build(BuildContext context) {
-      final propertiesAsync = ref.watch(landlordPropertiesProvider);
-      final currentUser = ref.watch(currentUserProvider);
+  @override
+  Widget build(BuildContext context) {
+    final propertiesAsync = ref.watch(landlordPropertiesProvider);
+    final currentUser = ref.watch(currentUserProvider);
 
-      return Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: propertiesAsync.when(
-            data: (properties) => SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-                    _buildHeader(currentUser?.fullName ?? 'Property Manager'),
-                    const SizedBox(height: 30),
-                    _buildSearchBar(),
-                    const SizedBox(height: 30),
-                    _buildPropertyOverview(properties),
-                    const SizedBox(height: 30),
-                    _buildQuickAccess(),
-                    const SizedBox(height: 30),
-                    _buildRecentMessages(),
-                    const SizedBox(height: 30),
-                    _buildMaintenanceRequests(),
-                    const SizedBox(height: 30),
-                    _buildFinancialOverview(properties),
-                    const SizedBox(height: 30),
-                  ],
-                ),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: propertiesAsync.when(
+          data: (properties) => SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
+                  _buildHeader(currentUser?.fullName ?? 'Property Manager'),
+                  const SizedBox(height: 30),
+                  _buildSearchBar(),
+                  const SizedBox(height: 30),
+                  _buildPropertyOverview(properties),
+                  const SizedBox(height: 30),
+                  _buildQuickAccess(),
+                  const SizedBox(height: 30),
+                  _buildRecentMessages(),
+                  const SizedBox(height: 30),
+                  _buildMaintenanceRequests(),
+                  const SizedBox(height: 30),
+                  _buildFinancialOverview(properties),
+                  const SizedBox(height: 30),
+                ],
               ),
             ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stack) => Center(child: Text('Error: $error')),
           ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stack) => Center(child: Text('Error: $error')),
         ),
-        bottomNavigationBar: _buildGlassBottomNav(),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => context.push('/add-property'),
-          child: const Icon(Icons.add),
-        ),
-      );
-    }
-  Widget _buildHeader(String name) {    return Row(
+      ),
+      bottomNavigationBar: _buildGlassBottomNav(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/add-property'),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildHeader(String name) {
+    return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Column(
@@ -121,26 +123,44 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Property Overview',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Property Overview',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              '${properties.length} Properties',
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 16,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 20),
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: properties.length,
-          itemBuilder: (context, index) => _buildPropertyCard(properties[index]),
+          itemBuilder: (context, index) => GestureDetector(
+            onTap: () => context.push('/property/${properties[index].id}'),
+            child: _buildPropertyCard(properties[index]),
+          ),
         ),
       ],
     );
   }
 
   Widget _buildPropertyCard(Property property) {
+    final statusColor =
+        property.status == 'rented' ? Colors.green : Colors.orange;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
@@ -158,42 +178,60 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
       child: Row(
         children: [
           Expanded(
+            flex: 2,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  property.address.street,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2D3142),
-                  ),
+                  '${property.address.street}, ${property.address.city}',
+                  style: const TextStyle(fontSize: 20),
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  'Occupancy: ${property.status == "rented" ? "100%" : "0%"}',
-                  style: TextStyle(
-                    color: const Color(0xFF2D3142).withAlpha(70),
-                    fontSize: 16,
-                  ),
-                ),
-                Text(
-                  'Rent: \$${property.rentAmount}',
-                  style: TextStyle(
-                    color: const Color(0xFF2D3142).withAlpha(70),
-                    fontSize: 16,
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        property.status.toUpperCase(),
+                        style: TextStyle(
+                          color: statusColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '\$${property.rentAmount}/month',
+                      style: TextStyle(
+                        color: const Color(0xFF2D3142).withAlpha(70),
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.network(
-              'https://picsum.photos/200/100?random=${property.id}',
-              width: 120,
-              height: 90,
-              fit: BoxFit.cover,
+          const SizedBox(width: 16),
+          Expanded(
+            flex: 1,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(
+                'https://picsum.photos/200/100?random=${property.id}',
+                width: 120,
+                height: 90,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
         ],
@@ -418,7 +456,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
     final totalRevenue = properties
         .where((p) => p.status == 'rented')
         .fold(0.0, (sum, p) => sum + p.rentAmount);
-        
+
     final outstanding = properties
         .where((p) => p.status == 'rented')
         .fold(0.0, (sum, p) => sum + (p.outstandingPayments));
