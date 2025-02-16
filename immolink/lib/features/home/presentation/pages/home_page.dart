@@ -11,6 +11,9 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Add debug prints to trace the flow
+    print('Building HomePage');
+    
     ref.listen<AuthState>(authProvider, (previous, current) {
       print('Auth state changed: ${current.isAuthenticated}');
       if (!current.isAuthenticated) {
@@ -21,7 +24,12 @@ class HomePage extends ConsumerWidget {
     final userRole = ref.watch(userRoleProvider);
     print('Current user role: $userRole');
 
-    return userRole == 'landlord'
+    // Add null check and loading state
+    if (userRole.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return userRole == 'landlord' 
         ? const LandlordDashboard()
         : const TenantDashboard();
   }

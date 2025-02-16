@@ -5,56 +5,39 @@ const { MongoClient } = require('mongodb');
 const { dbUri, dbName } = require('../config');
 
 router.post('/register', async (req, res) => {
-  if (!dbUri) {
-    return res.status(500).json({ message: 'Database configuration missing' });
-  }
-
   const client = new MongoClient(dbUri);
   
   try {
     await client.connect();
     const db = client.db(dbName);
-    const users = db.collection('users');
-    
-    // Check if user already exists
-    const existingUser = await users.findOne({ email: req.body.email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email already registered' });
-    }
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(req.body.password, salt);
-
-    // Create new user document
+    // Create user document matching schema
     const newUser = {
       email: req.body.email,
-      password: hashedPassword,
+      password: await bcrypt.hash(req.body.password, 10),
       fullName: req.body.fullName,
+      role: req.body.role.toLowerCase(), // Ensure lowercase for enum match
       birthDate: new Date(req.body.birthDate),
-      role: req.body.role,
       isAdmin: false,
-      isValidated: false,
-      address: {
-        street: '',
-        city: '',
-        postalCode: '',
-        country: ''
-      },
-      createdAt: new Date()
+      isValidated: true
     };
 
-    // Insert user into database
-    const result = await users.insertOne(newUser);
+    // Log document for verification
+    console.log('Attempting to insert user:', newUser);
+
+    const result = await db.collection('users').insertOne(newUser);
     
-    // Return success response
     res.status(201).json({
-      message: 'User registered successfully',
+      success: true,
       userId: result.insertedId
     });
-
   } catch (error) {
-    res.status(500).json({ message: 'Registration failed', error: error.message });
+    console.error('Registration error:', error);
+    res.status(500).json({ 
+      message: 'Registration failed', 
+      error: error.message,
+      details: error.errInfo 
+    });
   } finally {
     await client.close();
   }
@@ -63,12 +46,12 @@ router.post('/register', async (req, res) => {
 // Add login endpoint
 router.post('/login', async (req, res) => {
   const client = new MongoClient(dbUri);
-  
+
   try {
     await client.connect();
     const db = client.db(dbName);
     const users = db.collection('users');
-    
+
     // Find user by email
     const user = await users.findOne({ email: req.body.email });
     if (!user) {

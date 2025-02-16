@@ -276,7 +276,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
         const SizedBox(height: 8),
         Row(
           children: [
-            _buildRoleOption('customer', 'Customer'),
+            _buildRoleOption('tenant', 'Tenant'),
             const SizedBox(width: 16),
             _buildRoleOption('landlord', 'Landlord'),
           ],

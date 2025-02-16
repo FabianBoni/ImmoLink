@@ -3,6 +3,7 @@ const cors = require('cors');
 const app = express();
 const authRoutes = require('./routes/auth');
 const propertyRoutes = require('./routes/properties');
+const usersRouter = require('./routes/users');
 
 // Enable CORS for all routes
 app.use(cors({
@@ -27,6 +28,8 @@ app.use('/api/auth', authRoutes);
 
 // Mount routes
 app.use('/api/properties', propertyRoutes);
+
+app.use('/api/users', usersRouter);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

@@ -5,31 +5,31 @@ const { dbUri, dbName } = require('../config');
 
 router.get('/landlord/:landlordId', async (req, res) => {
   const client = new MongoClient(dbUri);
-  
+
   try {
     await client.connect();
     const db = client.db(dbName);
-    
+
     console.log('Querying properties for landlordId:', req.params.landlordId);
     const properties = await db.collection('properties')
-      .find({ 
-        landlordId: req.params.landlordId.toString() 
+      .find({
+        landlordId: req.params.landlordId
       })
       .toArray();
-      
+
     console.log(req.params.landlordId.toString())
     console.log('Found properties:', properties.length);
     console.log('Properties details:', JSON.stringify(properties, null, 2));
 
     const propertyIds = properties.map(p => p._id);
-    
+
     const tenants = await db.collection('users')
-      .find({ 
+      .find({
         role: 'tenant',
         propertyId: { $in: propertyIds }
       })
       .toArray();
-      
+
     res.json({ properties, tenants });
   } catch (error) {
     console.error('Database error:', error);
@@ -41,26 +41,60 @@ router.get('/landlord/:landlordId', async (req, res) => {
 
 router.get('/:propertyId', async (req, res) => {
   const client = new MongoClient(dbUri);
-  
+
   try {
     await client.connect();
     const db = client.db(dbName);
-    
-    console.log('Fetching property:', req.params.propertyId);
-    
+
+    // Validate propertyId format before conversion
+    if (!ObjectId.isValid(req.params.propertyId)) {
+      return res.status(400).json({ message: 'Invalid property ID format' });
+    }
+
     const property = await db.collection('properties')
       .findOne({ _id: new ObjectId(req.params.propertyId) });
-      
-    console.log('Found property:', property);
-    
+
     if (!property) {
       return res.status(404).json({ message: 'Property not found' });
     }
-    
+
     res.json(property);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ message: 'Error fetching property details' });
+  } finally {
+    await client.close();
+  }
+});
+
+router.post('/:propertyId/invite-tenant', async (req, res) => {
+  const client = new MongoClient(dbUri);
+
+  try {
+    await client.connect();
+    const db = client.db(dbName);
+
+    const { tenantId } = req.body;
+    const propertyId = new ObjectId(req.params.propertyId);
+
+    // Update property with new tenant
+    const result = await db.collection('properties').updateOne(
+      { _id: propertyId },
+      {
+        $addToSet: { tenantIds: tenantId },
+        $set: { status: 'rented' }
+      }
+    );
+
+    // Update user with property assignment
+    await db.collection('users').updateOne(
+      { _id: new ObjectId(tenantId) },
+      { $set: { propertyId: propertyId } }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to invite tenant' });
   } finally {
     await client.close();
   }

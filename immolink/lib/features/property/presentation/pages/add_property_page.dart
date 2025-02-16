@@ -24,104 +24,192 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add New Property')),
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(
+        title: const Text('Add New Property'),
+        elevation: 0,
+      ),
       body: Form(
         key: _formKey,
-        child: ListView(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildImageUploadSection(),
+              const SizedBox(height: 20),
+              _buildLocationSection(),
+              const SizedBox(height: 20),
+              _buildPropertyDetailsSection(),
+              const SizedBox(height: 20),
+              _buildAmenitiesSection(),
+              const SizedBox(height: 32),
+              _buildSubmitButton(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageUploadSection() {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_a_photo, size: 40, color: Colors.grey[600]),
+              const SizedBox(height: 8),
+              Text(
+                'Add Property Photos',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLocationSection() {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildAddressInput(),
-            _buildRentInput(),
-            _buildPropertyDetails(),
-            _buildAmenitiesSelector(),
-            _buildSubmitButton(),
+            Text(
+              'Location Details',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 20),
+            TextFormField(
+              controller: _addressController,
+              decoration: InputDecoration(
+                labelText: 'Street Address',
+                prefixIcon: const Icon(Icons.location_on),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              validator: (value) =>
+                  value?.isEmpty ?? true ? 'Address is required' : null,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _cityController,
+                    decoration: InputDecoration(
+                      labelText: 'City',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextFormField(
+                    controller: _postalCodeController,
+                    decoration: InputDecoration(
+                      labelText: 'Postal Code',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildPropertyDetails() {
-    return Row(
-      children: [
-        Expanded(
-          child: TextFormField(
-            controller: _sizeController,
-            decoration: const InputDecoration(
-              labelText: 'Size (m²)',
-              suffixText: 'm²',
-            ),
-            keyboardType: TextInputType.number,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: TextFormField(
-            controller: _roomsController,
-            decoration: const InputDecoration(
-              labelText: 'Number of Rooms',
-            ),
-            keyboardType: TextInputType.number,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAddressInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextFormField(
-          controller: _addressController,
-          decoration: const InputDecoration(
-            labelText: 'Street Address',
-            prefixIcon: Icon(Icons.location_on),
-          ),
-          validator: (value) =>
-              value?.isEmpty ?? true ? 'Address is required' : null,
-        ),
-        const SizedBox(height: 16),
-        Row(
+  Widget _buildPropertyDetailsSection() {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: TextFormField(
-                controller: _cityController,
-                decoration: const InputDecoration(labelText: 'City'),
-              ),
+            Text(
+              'Property Details',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: TextFormField(
-                controller: _postalCodeController,
-                decoration: const InputDecoration(labelText: 'Postal Code'),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: _sizeController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Size (m²)',
+                      suffixText: 'm²',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextFormField(
+                    controller: _roomsController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Number of Rooms',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _rentController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Monthly Rent (CHF)',
+                prefixIcon: const Icon(Icons.attach_money),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
+              validator: (value) {
+                if (value?.isEmpty ?? true) return 'Rent amount is required';
+                if (double.tryParse(value!) == null) {
+                  return 'Please enter a valid amount';
+                }
+                return null;
+              },
             ),
           ],
         ),
-      ],
-    );
-  }
-
-  Widget _buildRentInput() {
-    return TextFormField(
-      controller: _rentController,
-      keyboardType: TextInputType.number,
-      decoration: const InputDecoration(
-        labelText: 'Monthly Rent',
-        prefixIcon: Icon(Icons.attach_money),
-        suffixText: 'CHF',
       ),
-      validator: (value) {
-        if (value?.isEmpty ?? true) return 'Rent amount is required';
-        if (double.tryParse(value!) == null)
-          return 'Please enter a valid amount';
-        return null;
-      },
     );
   }
 
-  Widget _buildAmenitiesSelector() {
+  Widget _buildAmenitiesSection() {
     final amenitiesList = [
       'Parking',
       'Elevator',
@@ -133,33 +221,47 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> {
       'Laundry'
     ];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Amenities',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: amenitiesList.map((amenity) {
-            final isSelected = selectedAmenities.contains(amenity);
-            return FilterChip(
-              label: Text(amenity),
-              selected: isSelected,
-              onSelected: (selected) {
-                setState(() {
-                  if (selected) {
-                    selectedAmenities.add(amenity);
-                  } else {
-                    selectedAmenities.remove(amenity);
-                  }
-                });
-              },
-            );
-          }).toList(),
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Amenities',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 20),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: amenitiesList.map((amenity) {
+                final isSelected = selectedAmenities.contains(amenity);
+                return FilterChip(
+                  label: Text(amenity),
+                  selected: isSelected,
+                  onSelected: (selected) {
+                    setState(() {
+                      if (selected) {
+                        selectedAmenities.add(amenity);
+                      } else {
+                        selectedAmenities.remove(amenity);
+                      }
+                    });
+                  },
+                  backgroundColor: isSelected
+                      ? Theme.of(context).primaryColor.withOpacity(0.1)
+                      : null,
+                  checkmarkColor: Theme.of(context).primaryColor,
+                );
+              }).toList(),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -167,27 +269,32 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> {
     return ElevatedButton(
       onPressed: _submitForm,
       style: ElevatedButton.styleFrom(
-        minimumSize: const Size(double.infinity, 50),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
-      child: const Text('Add Property'),
+      child: const Text(
+        'Add Property',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
     );
   }
 
   void _submitForm() {
     if (_formKey.currentState?.validate() ?? false) {
       final currentUser = ref.read(currentUserProvider);
-      final landlordId =
-          currentUser?.id.toString() ?? ''; // Explicit string conversion
+      final landlordId = currentUser?.id.toString() ?? '';
 
       final property = Property(
         id: const Uuid().v4(),
-        landlordId: landlordId, // Now properly typed as String
+        landlordId: landlordId,
         tenantIds: [],
         address: Address(
           street: _addressController.text,
           city: _cityController.text,
           postalCode: _postalCodeController.text,
-          country: 'Switzerland', // Default for now
+          country: 'Switzerland',
         ),
         rentAmount: double.parse(_rentController.text),
         details: PropertyDetails(
@@ -195,11 +302,11 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> {
           rooms: int.parse(_roomsController.text),
           amenities: selectedAmenities,
         ),
-        status: 'available', // New properties start as available
+        status: 'available',
       );
 
       ref.read(propertyServiceProvider).addProperty(property);
-      context.pop(); // Return to previous screen after submission
+      context.pop();
     }
   }
 }

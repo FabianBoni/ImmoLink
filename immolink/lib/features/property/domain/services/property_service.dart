@@ -40,6 +40,18 @@ class PropertyService {
     }
   }
 
+  Future<void> inviteTenant(String propertyId, String tenantId) async {
+    final response = await http.post(
+      Uri.parse('$_apiUrl/properties/$propertyId/invite-tenant'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'tenantId': tenantId}),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to invite tenant');
+    }
+  }
+
   Stream<List<Property>> getLandlordProperties(String landlordId) async* {
     final idString =
         landlordId.toString().replaceAll('ObjectId("', '').replaceAll('")', '');

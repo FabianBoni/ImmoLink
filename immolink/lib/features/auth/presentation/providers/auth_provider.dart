@@ -3,7 +3,6 @@ import 'package:immolink/features/auth/domain/models/user.dart';
 import 'package:immolink/features/auth/domain/services/auth_service.dart';
 import 'package:immolink/features/auth/presentation/providers/user_role_provider.dart';
 import 'package:immolink/features/property/domain/models/property.dart';
-import 'package:mongo_dart/mongo_dart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthState {
@@ -40,9 +39,36 @@ class AuthState {
 
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 
-final currentUserProvider = StateProvider<User?>((ref) {
-  print('Initializing currentUserProvider');
-  return null;
+class CurrentUserNotifier extends StateNotifier<User?> {
+  CurrentUserNotifier() : super(null);
+
+  Future<void> setUser(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    state = User(
+      id: userId,
+      email: prefs.getString('email') ?? '',
+      role: prefs.getString('userRole') ?? '',
+      fullName: prefs.getString('fullName') ?? '',
+      birthDate: DateTime.now(),
+      isAdmin: false,
+      isValidated: true,
+      address: Address(
+        street: '',
+        city: '',
+        postalCode: '',
+        country: ''
+      )
+    );
+  }
+
+  void clearUser() {
+    state = null;
+  }
+}
+
+final currentUserProvider = StateNotifierProvider<CurrentUserNotifier, User?>((ref) {
+  return CurrentUserNotifier();
 });
 
 class AuthNotifier extends StateNotifier<AuthState> {
@@ -54,38 +80,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> _restoreSession() async {
-    print('Restoring auth session');
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('userId');
 
     if (userId != null) {
-      ref.read(currentUserProvider.notifier).state = User(
-          id: ObjectId.fromHexString(userId),
-          email: prefs.getString('email') ?? '',
-          role: prefs.getString('role') ?? '',
-          fullName: prefs.getString('fullName') ?? '',
-          birthDate: DateTime.now(),
-          isAdmin: false,
-          isValidated: true,
-          address: Address(street: '', city: '', postalCode: '', country: ''));
-
+      await ref.read(currentUserProvider.notifier).setUser(userId);
       state = state.copyWith(isAuthenticated: true, userId: userId);
     }
   }
 
   Future<void> login(String email, String password) async {
-    print('Starting login process for email: $email');
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final userData =
-          await _authService.loginUser(email: email, password: password);
-      print('Received user data: $userData');
+      final userData = await _authService.loginUser(email: email, password: password);
 
-      // Convert string ID to ObjectId
-      final userId = ObjectId.fromHexString(userData['userId']);
-
-      // Store data in SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await Future.wait([
         prefs.setString('userId', userData['userId']),
@@ -95,29 +104,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
         prefs.setString('fullName', userData['fullName'])
       ]);
 
-      // Update userRoleProvider with proper ID type
       ref.read(userRoleProvider.notifier).setUserRole(userData['role']);
-      print('User role set to: ${userData['role']}');
-
-      // Update currentUserProvider with converted ObjectId
-      ref.read(currentUserProvider.notifier).state = User(
-          id: userId, // Now using ObjectId instead of String
-          email: userData['email'],
-          role: userData['role'],
-          fullName: userData['fullName'],
-          birthDate: DateTime.now(),
-          isAdmin: false,
-          isValidated: true,
-          address: Address(street: '', city: '', postalCode: '', country: ''));
-      print('User provider updated');
+      await ref.read(currentUserProvider.notifier).setUser(userData['userId']);
 
       state = state.copyWith(
-          isLoading: false, isAuthenticated: true, userId: userData['userId']);
-      print('Auth state updated');
+        isLoading: false,
+        isAuthenticated: true,
+        userId: userData['userId']
+      );
     } catch (e) {
-      print('Login error: $e');
       state = state.copyWith(
-          isLoading: false, error: e.toString(), isAuthenticated: false);
+        isLoading: false,
+        error: e.toString(),
+        isAuthenticated: false
+      );
     }
   }
 
@@ -127,7 +127,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
-      ref.read(currentUserProvider.notifier).state = null;
+      ref.read(currentUserProvider.notifier).clearUser();
       state = AuthState.initial();
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -137,6 +137,5 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final authService = ref.read(authServiceProvider);
-  print('Initializing AuthNotifier with service');
   return AuthNotifier(authService, ref);
 });
