@@ -48,6 +48,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/conversations',
         builder: (context, state) => const ConversationsListPage(),
       ),
+      GoRoute(
+        path: '/property/:id',
+        builder: (context, state) => PropertyDetailsPage(
+          propertyId: state.pathParameters['id']!,
+        ),
+      ),
     ],
     redirect: (context, state) {
       final isLoggingIn = state.matchedLocation == '/login';

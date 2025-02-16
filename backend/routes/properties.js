@@ -39,6 +39,33 @@ router.get('/landlord/:landlordId', async (req, res) => {
   }
 });
 
+router.get('/:propertyId', async (req, res) => {
+  const client = new MongoClient(dbUri);
+  
+  try {
+    await client.connect();
+    const db = client.db(dbName);
+    
+    console.log('Fetching property:', req.params.propertyId);
+    
+    const property = await db.collection('properties')
+      .findOne({ _id: new ObjectId(req.params.propertyId) });
+      
+    console.log('Found property:', property);
+    
+    if (!property) {
+      return res.status(404).json({ message: 'Property not found' });
+    }
+    
+    res.json(property);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ message: 'Error fetching property details' });
+  } finally {
+    await client.close();
+  }
+});
+
 // New POST route for property creation
 router.post('/', async (req, res) => {
   const client = new MongoClient(dbUri);

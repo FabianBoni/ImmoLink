@@ -72,16 +72,22 @@ class PropertyService {
   }
 
   Stream<Property> getPropertyById(String propertyId) async* {
+    print('Fetching property with ID: $propertyId');
+
     final response = await http.get(
       Uri.parse('$_apiUrl/properties/$propertyId'),
       headers: {'Content-Type': 'application/json'},
     );
 
+    print('API Response status: ${response.statusCode}');
+    print('API Response body: ${response.body}');
+
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       yield Property.fromMap(data);
     } else {
-      throw Exception('Failed to load property details');
+      throw Exception(
+          'Failed to load property details: ${response.statusCode}');
     }
   }
 }

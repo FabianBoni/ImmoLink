@@ -149,7 +149,10 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: properties.length,
           itemBuilder: (context, index) => GestureDetector(
-            onTap: () => context.push('/property/${properties[index].id}'),
+            onTap: () {
+              print('Property ID for navigation: ${properties[index].id}');
+              context.push('/property/${properties[index].id}');
+            },
             child: _buildPropertyCard(properties[index]),
           ),
         ),
