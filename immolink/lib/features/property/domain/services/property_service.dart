@@ -41,15 +41,26 @@ class PropertyService {
   }
 
   Future<void> inviteTenant(String propertyId, String tenantId) async {
-    final response = await http.post(
+    final prefs = await SharedPreferences.getInstance();
+    final landlordId = prefs.getString('userId');
+
+    // Update property with tenant
+    await http.post(
       Uri.parse('$_apiUrl/properties/$propertyId/invite-tenant'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({'tenantId': tenantId}),
     );
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to invite tenant');
-    }
+    // Create conversation
+    await http.post(
+      Uri.parse('$_apiUrl/chat/conversations'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'propertyId': propertyId,
+        'landlordId': landlordId,
+        'tenantId': tenantId
+      }),
+    );
   }
 
   Stream<List<Property>> getLandlordProperties(String landlordId) async* {
