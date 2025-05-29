@@ -13,7 +13,7 @@ class AddPropertyPage extends ConsumerStatefulWidget {
   ConsumerState<AddPropertyPage> createState() => _AddPropertyPageState();
 }
 
-class _AddPropertyPageState extends ConsumerState<AddPropertyPage> {
+class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _addressController = TextEditingController();
   final _rentController = TextEditingController();
@@ -25,6 +25,9 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> {
   List<String> selectedImages = [];
   bool _isLoading = false;
 
+  late AnimationController _animationController;
+  late Animation<double> _slideAnimation;
+
   final List<String> amenitiesList = [
     'Parking', 'Elevator', 'Balcony', 'Garden', 'Furnished', 
     'Pet Friendly', 'Storage', 'Laundry', 'Swimming Pool', 
@@ -32,8 +35,33 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> {
     'Internet', 'Security System'
   ];
 
+  // Modern design system colors
+  static const Color background = Color(0xFFFFFFFF);
+  static const Color surface = Color(0xFFF2F2F2);
+  static const Color divider = Color(0xFFE0E0E0);
+  static const Color accent = Color(0xFF007AFF);
+  static const Color textPrimary = Color(0xFF000000);
+  static const Color textSecondary = Color(0xFF212121);
+  static const Color textCaption = Color(0xFF8E8E93);
+  static const Color success = Color(0xFF34C759);
+  static const Color error = Color(0xFFFF3B30);
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _slideAnimation = Tween<double>(begin: 30.0, end: 0.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+    _animationController.forward();
+  }
+
   @override
   void dispose() {
+    _animationController.dispose();
     _addressController.dispose();
     _rentController.dispose();
     _sizeController.dispose();
@@ -46,77 +74,83 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      backgroundColor: background,
       appBar: AppBar(
-        title: const Text(
-          'Add New Property',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
+        backgroundColor: background,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.blue.shade700,
-              Colors.blue.shade900,
-              Colors.blue.shade50,
-              Colors.white,
-            ],
-            stops: const [0.0, 0.3, 0.7, 1.0],
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: textPrimary, size: 20),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          'Add Property',
+          style: TextStyle(
+            color: textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.3,
           ),
         ),
-        child: SafeArea(
-          child: _isLoading
-              ? _buildLoadingWidget()
-              : Form(
-                  key: _formKey,
-                  child: ListView(
-                    padding: const EdgeInsets.all(16.0),
-                    children: [
-                      const SizedBox(height: 20),
-                      _buildHeaderSection(),
-                      const SizedBox(height: 30),
-                      _buildLocationSection(),
-                      const SizedBox(height: 24),
-                      _buildPropertyDetailsSection(),
-                      const SizedBox(height: 24),
-                      _buildAmenitiesSection(),
-                      const SizedBox(height: 24),
-                      _buildImageUploadSection(),
-                      const SizedBox(height: 30),
-                      _buildSubmitButton(),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
-                ),
-        ),
+        centerTitle: true,
       ),
+      body: _isLoading
+          ? _buildLoadingWidget()
+          : AnimatedBuilder(
+              animation: _slideAnimation,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, _slideAnimation.value),
+                  child: Opacity(
+                    opacity: 1 - (_slideAnimation.value / 30),
+                    child: Form(
+                      key: _formKey,
+                      child: ListView(
+                        padding: const EdgeInsets.all(20.0),
+                        children: [
+                          _buildHeaderSection(),
+                          const SizedBox(height: 32),
+                          _buildLocationCard(),
+                          const SizedBox(height: 24),
+                          _buildDetailsCard(),
+                          const SizedBox(height: 24),
+                          _buildAmenitiesCard(),
+                          const SizedBox(height: 24),
+                          _buildImagesCard(),
+                          const SizedBox(height: 40),
+                          _buildSubmitButton(),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
     );
   }
 
   Widget _buildLoadingWidget() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade700),
+          SizedBox(
+            width: 32,
+            height: 32,
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(accent),
+              strokeWidth: 2.5,
+            ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 24),
           Text(
-            'Creating Property...',
+            'Creating property...',
             style: TextStyle(
-              fontSize: 18,
-              color: Colors.blue.shade700,
+              color: textCaption,
+              fontSize: 16,
               fontWeight: FontWeight.w500,
+              letterSpacing: -0.2,
             ),
           ),
         ],
@@ -125,399 +159,327 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> {
   }
 
   Widget _buildHeaderSection() {
-    return Card(
-      elevation: 8,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(24.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            colors: [Colors.blue.shade600, Colors.blue.shade800],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'New Property',
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.w700,
+            color: textPrimary,
+            letterSpacing: -0.8,
+            height: 1.1,
           ),
         ),
-        child: Column(
+        const SizedBox(height: 8),
+        Text(
+          'Add property details to get started',
+          style: TextStyle(
+            fontSize: 16,
+            color: textCaption,
+            fontWeight: FontWeight.w400,
+            letterSpacing: -0.2,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLocationCard() {
+    return _buildCard(
+      title: 'Location',
+      children: [
+        _buildTextField(
+          controller: _addressController,
+          label: 'Street Address',
+          validator: (value) => value?.isEmpty ?? true ? 'Address is required' : null,
+        ),
+        const SizedBox(height: 24),
+        Row(
           children: [
-            Icon(
-              Icons.home_work,
-              size: 60,
-              color: Colors.white,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Create New Property',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            Expanded(
+              flex: 2,
+              child: _buildTextField(
+                controller: _cityController,
+                label: 'City',
+                validator: (value) => value?.isEmpty ?? true ? 'City is required' : null,
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Fill in the details below to add a new property to your portfolio',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.white70,
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildTextField(
+                controller: _postalCodeController,
+                label: 'Postal Code',
+                validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
               ),
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildLocationSection() {
-    return Card(
-      elevation: 6,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildDetailsCard() {
+    return _buildCard(
+      title: 'Property Details',
+      children: [
+        _buildTextField(
+          controller: _rentController,
+          label: 'Monthly Rent (CHF)',
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          validator: (value) {
+            if (value?.isEmpty ?? true) return 'Rent amount is required';
+            if (double.tryParse(value!) == null) return 'Invalid amount';
+            return null;
+          },
+        ),
+        const SizedBox(height: 24),
+        Row(
           children: [
-            Row(
-              children: [
-                Icon(Icons.location_on, color: Colors.blue.shade700, size: 28),
-                const SizedBox(width: 12),
-                const Text(
-                  'Location Details',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+            Expanded(
+              child: _buildTextField(
+                controller: _sizeController,
+                label: 'Size (m²)',
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+              ),
             ),
-            const SizedBox(height: 20),
-            _buildCustomTextField(
-              controller: _addressController,
-              label: 'Street Address',
-              icon: Icons.home,
-              validator: (value) => value?.isEmpty ?? true ? 'Address is required' : null,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: _buildCustomTextField(
-                    controller: _cityController,
-                    label: 'City',
-                    icon: Icons.location_city,
-                    validator: (value) => value?.isEmpty ?? true ? 'City is required' : null,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildCustomTextField(
-                    controller: _postalCodeController,
-                    label: 'Postal Code',
-                    icon: Icons.mail,
-                    validator: (value) => value?.isEmpty ?? true ? 'Postal code is required' : null,
-                  ),
-                ),
-              ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildTextField(
+                controller: _roomsController,
+                label: 'Rooms',
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              ),
             ),
           ],
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildPropertyDetailsSection() {
-    return Card(
-      elevation: 6,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.info, color: Colors.blue.shade700, size: 28),
-                const SizedBox(width: 12),
-                const Text(
-                  'Property Details',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildCustomTextField(
-              controller: _rentController,
-              label: 'Monthly Rent (CHF)',
-              icon: Icons.attach_money,
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              validator: (value) {
-                if (value?.isEmpty ?? true) return 'Rent amount is required';
-                if (double.tryParse(value!) == null) return 'Please enter a valid amount';
-                return null;
+  Widget _buildAmenitiesCard() {
+    return _buildCard(
+      title: 'Amenities',
+      children: [
+        Text(
+          'Select available amenities',
+          style: TextStyle(
+            fontSize: 14,
+            color: textCaption,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: amenitiesList.map((amenity) {
+            final isSelected = selectedAmenities.contains(amenity);
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                setState(() {
+                  if (isSelected) {
+                    selectedAmenities.remove(amenity);
+                  } else {
+                    selectedAmenities.add(amenity);
+                  }
+                });
               },
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildCustomTextField(
-                    controller: _sizeController,
-                    label: 'Size (m²)',
-                    icon: Icons.square_foot,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildCustomTextField(
-                    controller: _roomsController,
-                    label: 'Number of Rooms',
-                    icon: Icons.meeting_room,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAmenitiesSection() {
-    return Card(
-      elevation: 6,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.star, color: Colors.blue.shade700, size: 28),
-                const SizedBox(width: 12),
-                const Text(
-                  'Amenities',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Select all amenities available in this property:',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: amenitiesList.map((amenity) {
-                final isSelected = selectedAmenities.contains(amenity);
-                return FilterChip(
-                  label: Text(amenity),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      if (selected) {
-                        selectedAmenities.add(amenity);
-                      } else {
-                        selectedAmenities.remove(amenity);
-                      }
-                    });
-                  },
-                  selectedColor: Colors.blue.shade100,
-                  checkmarkColor: Colors.blue.shade700,
-                  backgroundColor: Colors.grey.shade100,
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImageUploadSection() {
-    return Card(
-      elevation: 6,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.photo_library, color: Colors.blue.shade700, size: 28),
-                const SizedBox(width: 12),
-                const Text(
-                  'Property Images',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            GestureDetector(
-              onTap: _pickImages,
-              child: Container(
-                height: 120,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeInOut,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  border: Border.all(
-                    color: Colors.blue.shade300,
-                    width: 2,
-                    style: BorderStyle.solid,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.blue.shade50,
+                  color: isSelected ? accent : surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: isSelected ? null : Border.all(color: divider, width: 1),
                 ),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.cloud_upload,
-                        size: 40,
-                        color: Colors.blue.shade700,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Tap to upload images',
-                        style: TextStyle(
-                          color: Colors.blue.shade700,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      if (selectedImages.isNotEmpty)
-                        Text(
-                          '${selectedImages.length} image(s) selected',
-                          style: TextStyle(
-                            color: Colors.blue.shade600,
-                            fontSize: 12,
-                          ),
-                        ),
-                    ],
+                child: Text(
+                  amenity,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.1,
                   ),
                 ),
               ),
-            ),
-          ],
+            );
+          }).toList(),
         ),
-      ),
+      ],
     );
   }
 
-  Widget _buildCustomTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    String? Function(String?)? validator,
-    TextInputType? keyboardType,
-    List<TextInputFormatter>? inputFormatters,
-    int maxLines = 1,
-  }) {
+  Widget _buildImagesCard() {
+    return _buildCard(
+      title: 'Images',
+      children: [
+        GestureDetector(
+          onTap: _pickImages,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            height: 120,
+            decoration: BoxDecoration(
+              color: selectedImages.isEmpty ? surface : accent.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: selectedImages.isEmpty ? divider : accent.withOpacity(0.3), 
+                width: 1.5,
+              ),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    selectedImages.isEmpty ? Icons.cloud_upload_outlined : Icons.check_circle_outline,
+                    size: 28,
+                    color: selectedImages.isEmpty ? textCaption : accent,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    selectedImages.isEmpty 
+                        ? 'Tap to upload images' 
+                        : '${selectedImages.length} image(s) selected',
+                    style: TextStyle(
+                      color: selectedImages.isEmpty ? textCaption : accent,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCard({required String title, required List<Widget> children}) {
     return Container(
+      padding: const EdgeInsets.all(24.0),
       decoration: BoxDecoration(
+        color: background,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: controller,
-        validator: validator,
-        keyboardType: keyboardType,
-        inputFormatters: inputFormatters,
-        maxLines: maxLines,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: Colors.blue.shade700),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          filled: true,
-          fillColor: Colors.white,
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.red),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSubmitButton() {
-    return Container(
-      width: double.infinity,
-      height: 60,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [Colors.blue.shade600, Colors.blue.shade800],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
-            spreadRadius: 2,
-            blurRadius: 8,
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 20),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    String? Function(String?)? validator,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: textCaption,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          validator: validator,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          style: const TextStyle(
+            color: textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            letterSpacing: -0.2,
+          ),
+          decoration: InputDecoration(
+            hintText: 'Enter $label',
+            hintStyle: TextStyle(
+              color: textCaption,
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+            ),
+            filled: true,
+            fillColor: surface,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: accent, width: 2),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: error, width: 1),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
       child: ElevatedButton(
         onPressed: _submitForm,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
+          backgroundColor: accent,
+          foregroundColor: Colors.white,
+          elevation: 0,
           shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(27),
           ),
         ),
         child: const Text(
-          'Add Property',
+          'Create Property',
           style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.2,
           ),
         ),
       ),
@@ -526,6 +488,7 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> {
 
   Future<void> _pickImages() async {
     try {
+      HapticFeedback.lightImpact();
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: true,
@@ -539,15 +502,21 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${result.files.length} image(s) selected'),
-            backgroundColor: Colors.green,
+            backgroundColor: success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            margin: const EdgeInsets.all(16),
           ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error selecting images'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Error selecting images'),
+          backgroundColor: error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          margin: const EdgeInsets.all(16),
         ),
       );
     }
@@ -555,6 +524,7 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> {
 
   void _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
+      HapticFeedback.mediumImpact();
       setState(() {
         _isLoading = true;
       });
@@ -585,9 +555,12 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> {
         await ref.read(propertyServiceProvider).addProperty(property);
         
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Property added successfully!'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: const Text('Property created successfully!'),
+            backgroundColor: success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            margin: const EdgeInsets.all(16),
           ),
         );
         
@@ -595,8 +568,11 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> {
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error adding property: $e'),
-            backgroundColor: Colors.red,
+            content: Text('Error: $e'),
+            backgroundColor: error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            margin: const EdgeInsets.all(16),
           ),
         );
       } finally {
