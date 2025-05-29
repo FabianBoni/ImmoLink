@@ -1,29 +1,50 @@
 import 'package:flutter/material.dart';
-import 'package:immolink/features/property/domain/models/property.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_typography.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_spacing.dart';
+import '../theme/app_typography.dart';
 
-class PropertyCard extends StatelessWidget {
-  final Property property;
-  final VoidCallback onTap;
-  final VoidCallback? onWishlistTap;
+class PropertyCardData {
+  final String id;
+  final String title;
+  final String location;
+  final String distance;
+  final double rating;
+  final String dates;
+  final String price;
+  final String imageUrl;
   final bool isWishlisted;
 
-  const PropertyCard({
-    required this.property,
-    required this.onTap,
-    this.onWishlistTap,
+  const PropertyCardData({
+    required this.id,
+    required this.title,
+    required this.location,
+    required this.distance,
+    required this.rating,
+    required this.dates,
+    required this.price,
+    required this.imageUrl,
     this.isWishlisted = false,
-    Key? key,
-  }) : super(key: key);
+  });
+}
+
+class PropertyCard extends StatelessWidget {
+  final PropertyCardData property;
+  final VoidCallback? onTap;
+  final VoidCallback? onWishlistTap;
+
+  const PropertyCard({
+    super.key,
+    required this.property,
+    this.onTap,
+    this.onWishlistTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: AppSpacing.itemSeparation),
+        margin: const EdgeInsets.symmetric(horizontal: AppSpacing.horizontalPadding),
         decoration: BoxDecoration(
           color: AppColors.primaryBackground,
           borderRadius: BorderRadius.circular(AppBorderRadius.cardsButtons),
@@ -45,39 +66,43 @@ class PropertyCard extends StatelessWidget {
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(AppBorderRadius.cardsButtons),
                   ),
-                  child: Container(
+                  child: Image.network(
+                    property.imageUrl,
                     height: AppSizes.propertyCardImageHeight,
                     width: double.infinity,
-                    color: AppColors.surfaceCards,
-                    child: const Icon(
-                      Icons.home,
-                      color: AppColors.textPlaceholder,
-                      size: AppSizes.iconLarge,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: AppSizes.propertyCardImageHeight,
+                      color: AppColors.surfaceCards,
+                      child: const Icon(
+                        Icons.image_not_supported,
+                        color: AppColors.textPlaceholder,
+                        size: AppSizes.iconLarge,
+                      ),
                     ),
                   ),
                 ),
                 // Wishlist button
-                if (onWishlistTap != null)
-                  Positioned(
-                    top: AppSpacing.md,
-                    right: AppSpacing.md,
-                    child: GestureDetector(
-                      onTap: onWishlistTap,
-                      child: Container(
-                        width: AppSizes.iconLarge,
-                        height: AppSizes.iconLarge,
-                        decoration: BoxDecoration(
-                          color: AppColors.overlayWhite,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          isWishlisted ? Icons.favorite : Icons.favorite_border,
-                          color: isWishlisted ? AppColors.error : AppColors.textPrimary,
-                          size: AppSizes.iconSmall,
-                        ),
+                Positioned(
+                  top: AppSpacing.md,
+                  right: AppSpacing.md,
+                  child: GestureDetector(
+                    onTap: onWishlistTap,
+                    child: Container(
+                      width: AppSizes.iconLarge,
+                      height: AppSizes.iconLarge,
+                      decoration: BoxDecoration(
+                        color: AppColors.overlayWhite,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        property.isWishlisted ? Icons.favorite : Icons.favorite_border,
+                        color: property.isWishlisted ? AppColors.error : AppColors.textPrimary,
+                        size: AppSizes.iconSmall,
                       ),
                     ),
                   ),
+                ),
               ],
             ),
             
@@ -89,7 +114,7 @@ class PropertyCard extends StatelessWidget {
                 children: [
                   // Title
                   Text(
-                    property.address.street,
+                    property.title,
                     style: AppTypography.subhead,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -108,7 +133,7 @@ class PropertyCard extends StatelessWidget {
                       const SizedBox(width: AppSpacing.xs),
                       Expanded(
                         child: Text(
-                          '${property.address.city}, ${property.address.postalCode}',
+                          '${property.location} • ${property.distance}',
                           style: AppTypography.caption,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -119,7 +144,7 @@ class PropertyCard extends StatelessWidget {
                   
                   const SizedBox(height: AppSpacing.xs),
                   
-                  // Rating (mock data)
+                  // Rating
                   Row(
                     children: [
                       const Icon(
@@ -129,7 +154,7 @@ class PropertyCard extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
-                        '4.5', // Mock rating
+                        property.rating.toStringAsFixed(1),
                         style: AppTypography.caption,
                       ),
                     ],
@@ -137,7 +162,7 @@ class PropertyCard extends StatelessWidget {
                   
                   const SizedBox(height: AppSpacing.xs),
                   
-                  // Dates (mock data)
+                  // Dates
                   Row(
                     children: [
                       const Icon(
@@ -147,7 +172,7 @@ class PropertyCard extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
-                        'Available now', // Mock availability
+                        property.dates,
                         style: AppTypography.caption,
                       ),
                     ],
@@ -157,7 +182,7 @@ class PropertyCard extends StatelessWidget {
                   
                   // Price
                   Text(
-                    '€${property.rentAmount.toStringAsFixed(0)}/month',
+                    property.price,
                     style: AppTypography.heading2.copyWith(
                       color: AppColors.primaryAccent,
                     ),
