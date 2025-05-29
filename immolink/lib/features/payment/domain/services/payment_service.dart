@@ -1,5 +1,4 @@
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:immolink/features/payment/domain/models/payment.dart';
 import 'package:immolink/core/config/db_config.dart';
@@ -84,14 +83,11 @@ class PaymentService {
         id: 'offline-$id',
         propertyId: '',
         tenantId: '',
-        landlordId: '',
         amount: 0.0,
-        currency: 'CHF',
-        description: 'Unable to load payment details while offline',
+        date: DateTime.now(),
         status: 'Unknown',
-        paymentDate: DateTime.now(),
-        dueDate: DateTime.now(),
-        createdAt: DateTime.now(),
+        type: 'rent',
+        notes: 'Unable to load payment details while offline',
       );
     }
   }
@@ -116,7 +112,6 @@ class PaymentService {
       return payment.copyWith(
         id: 'offline-${DateTime.now().millisecondsSinceEpoch}',
         status: 'Pending',
-        createdAt: DateTime.now(),
       );
     }
   }
@@ -140,7 +135,6 @@ class PaymentService {
       // Return the updated payment to simulate successful update
       return payment.copyWith(
         status: payment.status,
-        updatedAt: DateTime.now(),
       );
     }
   }

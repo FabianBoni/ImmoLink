@@ -1,5 +1,4 @@
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:immolink/features/maintenance/domain/models/maintenance_request.dart';
 import 'package:immolink/core/config/db_config.dart';
@@ -88,8 +87,7 @@ class MaintenanceService {
         priority: 'Medium',
         description: 'Unable to load request details while offline',
         status: 'Unknown',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+        dateCreated: DateTime.now(),
       );
     }
   }
@@ -114,8 +112,7 @@ class MaintenanceService {
       return request.copyWith(
         id: 'offline-${DateTime.now().millisecondsSinceEpoch}',
         status: 'Pending',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
+        dateCreated: DateTime.now(),
       );
     }
   }
@@ -138,7 +135,7 @@ class MaintenanceService {
       print('Network error in updateMaintenanceRequest: $e');
       // Return the updated request to simulate successful update
       return request.copyWith(
-        updatedAt: DateTime.now(),
+        status: request.status,
       );
     }
   }
