@@ -23,15 +23,21 @@ const propertySchema = {
           description: "Property status"
         },
         rentAmount: {
-          bsonType: "number",
+          bsonType: ["int", "double"],
           minimum: 0
         },
         details: {
           bsonType: "object",
           required: ["size", "rooms", "amenities"],
           properties: {
-            size: { bsonType: "number" },
-            rooms: { bsonType: "number" },
+            size: { 
+              bsonType: ["int", "double"],
+              minimum: 0 
+            },
+            rooms: { 
+              bsonType: ["int", "double"],
+              minimum: 0 
+            },
             amenities: {
               bsonType: "array",
               items: { bsonType: "string" }
@@ -46,10 +52,15 @@ const propertySchema = {
           bsonType: "array",
           items: { bsonType: "string" }
         },
-        outstandingPayments: { bsonType: "number" },
+        outstandingPayments: { 
+          bsonType: ["int", "double"],
+          minimum: 0 
+        },
         createdAt: { bsonType: "date" },
         updatedAt: { bsonType: "date" }
       }
     }
   }
 };
+
+module.exports = propertySchema;

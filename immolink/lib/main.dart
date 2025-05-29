@@ -8,7 +8,15 @@ import 'package:flutter_dotenv/flutter_dotenv.dart' as dotenv;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.dotenv.load(fileName: "lib/config/immolink.env");
-  await DatabaseService.instance.connect();
+  
+  try {
+    await DatabaseService.instance.connect();
+    print('Database connected successfully');
+  } catch (e) {
+    print('Database connection failed: $e');
+    print('App will run in offline mode');
+  }
+  
   runApp(const ProviderScope(child: ImmoLink()));
 }
 

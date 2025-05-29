@@ -80,6 +80,23 @@ class PropertyService {
     }
   }
 
+  Stream<List<Property>> getTenantProperties(String tenantId) async* {
+    final idString =
+        tenantId.toString().replaceAll('ObjectId("', '').replaceAll('")', '');
+
+    final response = await http.get(
+      Uri.parse('$_apiUrl/properties/tenant/$idString'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      final List<dynamic> properties = responseData['properties'];
+      print('Found ${properties.length} properties for tenant');
+      yield properties.map((json) => Property.fromMap(json)).toList();
+    }
+  }
+
   Stream<List<Property>> getAllProperties() async* {
     final response = await http.get(
       Uri.parse('$_apiUrl/properties'),
