@@ -249,31 +249,43 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
 
   Widget _buildActionButton(String label, IconData icon, Color color) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(8),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.grey[800],
-                fontSize: 14,
+      child: GestureDetector(
+        onTap: () {
+          // Navigate based on the action button
+          if (label == 'Pay Rent') {
+            context.push('/payments/make');
+          } else if (label == 'Report Issue') {
+            context.push('/maintenance/request');
+          } else if (label == 'Message Landlord') {
+            context.push('/conversations');
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(8),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-            ),
-          ],
+            ],
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.grey[800],
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -407,9 +419,24 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
     return GestureDetector(
       onTap: () {
         setState(() => _selectedIndex = index);
-        // Handle navigation based on index
-        if (index == 1) { // Messages tab
-          context.push('/conversations');
+        
+        // Navigate to the appropriate page based on the selected index
+        switch (index) {
+          case 0: // Home
+            // Already on home page
+            break;
+          case 1: // Messages
+            context.push('/conversations');
+            break;
+          case 2: // Maintenance
+            context.push('/maintenance/request');
+            break;
+          case 3: // Payments
+            context.push('/payments/history');
+            break;
+          case 4: // Profile/Settings
+            context.push('/settings');
+            break;
         }
       },
       child: Column(

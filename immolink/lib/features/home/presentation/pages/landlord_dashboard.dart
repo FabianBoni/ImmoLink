@@ -586,7 +586,28 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> {
   Widget _buildNavItem(IconData icon, String label, int index) {
     final isSelected = _selectedIndex == index;
     return InkWell(
-      onTap: () => setState(() => _selectedIndex = index),
+      onTap: () {
+        setState(() => _selectedIndex = index);
+        
+        // Navigate to the appropriate page based on the selected index
+        switch (index) {
+          case 0: // Home
+            // Already on home page
+            break;
+          case 1: // Messages
+            context.push('/conversations');
+            break;
+          case 2: // Maintenance
+            context.push('/maintenance/manage');
+            break;
+          case 3: // Payments
+            context.push('/payments/history');
+            break;
+          case 4: // Profile/Settings
+            context.push('/settings');
+            break;
+        }
+      },
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
