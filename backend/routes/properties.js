@@ -105,48 +105,90 @@ router.post('/', async (req, res) => {
   const client = new MongoClient(dbUri);
 
   try {
-    // Transform incoming data to match schema
-    const propertyData = {
-      landlordId: req.body.landlordId,
+    await client.connect();
+    const db = client.db(dbName);
+
+    console.log('Received property data:', JSON.stringify(req.body, null, 2));
+
+    // Validate required fields
+    const { landlordId, address, status, rentAmount } = req.body;
+    
+    if (!landlordId || !address || !status || rentAmount === undefined) {
+      return res.status(400).json({ 
+        message: 'Missing required fields: landlordId, address, status, rentAmount' 
+      });
+    }
+
+    // Validate address structure
+    if (!address.street || !address.city || !address.postalCode || !address.country) {
+      return res.status(400).json({ 
+        message: 'Address must include street, city, postalCode, and country' 
+      });
+    }
+
+    // Validate status
+    const validStatuses = ['available', 'rented', 'maintenance'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ 
+        message: 'Status must be one of: available, rented, maintenance' 
+      });
+    }
+
+    // Validate rentAmount
+    if (typeof rentAmount !== 'number' || rentAmount < 0) {
+      return res.status(400).json({ 
+        message: 'Rent amount must be a positive number' 
+      });
+    }
+
+    // Create properly formatted document
+    const propertyDocument = {
+      landlordId: landlordId.toString(),
       address: {
-        street: req.body.address.street,
-        city: req.body.address.city,
-        postalCode: req.body.address.postalCode,
-        country: req.body.address.country
+        street: address.street.toString(),
+        city: address.city.toString(),
+        postalCode: address.postalCode.toString(),
+        country: address.country.toString()
       },
-      status: req.body.status,
-      rentAmount: Number(req.body.rentAmount),
-      details: {
-        size: Number(req.body.details.size),
-        rooms: Number(req.body.details.rooms),
-        amenities: req.body.details.amenities
+      status,
+      rentAmount: Number(rentAmount),
+      details: req.body.details ? {
+        size: req.body.details.size ? Number(req.body.details.size) : 0,
+        rooms: req.body.details.rooms ? Number(req.body.details.rooms) : 0,
+        amenities: Array.isArray(req.body.details.amenities) ? req.body.details.amenities : []
+      } : {
+        size: 0,
+        rooms: 0,
+        amenities: []
       },
-      imageUrls: req.body.imageUrls || [],
-      tenantIds: req.body.tenantIds || [],
-      outstandingPayments: Number(req.body.outstandingPayments) || 0,
+      imageUrls: Array.isArray(req.body.imageUrls) ? req.body.imageUrls : [],
+      tenantIds: Array.isArray(req.body.tenantIds) ? req.body.tenantIds : [],
+      outstandingPayments: req.body.outstandingPayments ? Number(req.body.outstandingPayments) : 0,
       createdAt: new Date(),
       updatedAt: new Date()
     };
 
-    await client.connect();
-    const db = client.db(dbName);
+    console.log('Formatted property document:', JSON.stringify(propertyDocument, null, 2));
 
-    console.log('Final property data:', JSON.stringify(propertyData, null, 2));
-    const result = await db.collection('properties').insertOne(propertyData);
-
-    res.status(201).json({
-      success: true,
-      propertyId: result.insertedId,
-      property: propertyData
+    const result = await db.collection('properties').insertOne(propertyDocument);
+    
+    res.status(201).json({ 
+      message: 'Property created successfully', 
+      propertyId: result.insertedId 
     });
 
   } catch (error) {
     console.error('Property creation error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to create property',
-      error: error.message
-    });
+    
+    if (error.code === 121) {
+      console.error('Validation error details:', error.errInfo?.details);
+      return res.status(400).json({ 
+        message: 'Document validation failed', 
+        details: error.errInfo?.details 
+      });
+    }
+    
+    res.status(500).json({ message: 'Error creating property' });
   } finally {
     await client.close();
   }

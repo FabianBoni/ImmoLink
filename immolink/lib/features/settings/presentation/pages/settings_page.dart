@@ -34,7 +34,8 @@ class SettingsPage extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
-            _buildProfileSection(context, currentUser),
+
+            _buildProfileSection(context, ref, currentUser),
             const SizedBox(height: 24),
             _buildPreferencesSection(context),
             const SizedBox(height: 24),
@@ -51,7 +52,7 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfileSection(BuildContext context, user) {
+  Widget _buildProfileSection(BuildContext context, WidgetRef ref, user) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
