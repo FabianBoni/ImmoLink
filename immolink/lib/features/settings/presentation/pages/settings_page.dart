@@ -395,7 +395,7 @@ class SettingsPage extends ConsumerWidget {
   Widget _buildLogoutButton(BuildContext context, WidgetRef ref) {
     return ElevatedButton(
       onPressed: () {
-        ref.read(authProvider.notifier).signOut();
+        ref.read(authProvider.notifier).logout();
         context.go('/login');
       },
       style: ElevatedButton.styleFrom(

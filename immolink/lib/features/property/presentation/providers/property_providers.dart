@@ -32,6 +32,17 @@ final landlordPropertiesProvider = StreamProvider<List<Property>>((ref) {
   return propertyService.getLandlordProperties(currentUser.id);
 });
 
+// Tenant-specific properties provider  
+final tenantPropertiesProvider = StreamProvider<List<Property>>((ref) {
+  final currentUser = ref.watch(currentUserProvider);
+  if (currentUser == null || currentUser.role != 'tenant') {
+    return Stream.value([]);
+  }
+
+  final propertyService = ref.watch(propertyServiceProvider);
+  return propertyService.getTenantProperties(currentUser.id);
+});
+
 final tenantInvitationProvider =
     StateNotifierProvider<TenantInvitationNotifier, AsyncValue<void>>((ref) {
   return TenantInvitationNotifier(ref.watch(propertyServiceProvider));
