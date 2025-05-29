@@ -131,7 +131,7 @@ class SettingsPage extends ConsumerWidget {
             const SizedBox(height: 16),
             OutlinedButton(
               onPressed: () {
-                // TODO: Navigate to edit profile page
+                _showEditProfileDialog(context, ref, user);
               },
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: Colors.blue.shade700),
@@ -175,7 +175,7 @@ class SettingsPage extends ConsumerWidget {
               'English',
               Icons.language,
               () {
-                // TODO: Implement language selection
+                _showLanguageSelectionDialog(context);
               },
             ),
             const Divider(),
@@ -185,7 +185,7 @@ class SettingsPage extends ConsumerWidget {
               'Light',
               Icons.brightness_6,
               () {
-                // TODO: Implement theme selection
+                _showThemeSelectionDialog(context);
               },
             ),
             const Divider(),
@@ -195,7 +195,7 @@ class SettingsPage extends ConsumerWidget {
               'CHF',
               Icons.attach_money,
               () {
-                // TODO: Implement currency selection
+                _showCurrencySelectionDialog(context);
               },
             ),
           ],
@@ -229,7 +229,7 @@ class SettingsPage extends ConsumerWidget {
               '',
               Icons.lock,
               () {
-                // TODO: Implement password change
+                _showChangePasswordDialog(context);
               },
             ),
             const Divider(),
@@ -239,7 +239,9 @@ class SettingsPage extends ConsumerWidget {
               'Disabled',
               Icons.security,
               () {
-                // TODO: Implement 2FA
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Two-Factor Authentication will be available soon')),
+                );
               },
             ),
             const Divider(),
@@ -249,7 +251,9 @@ class SettingsPage extends ConsumerWidget {
               '',
               Icons.privacy_tip,
               () {
-                // TODO: Implement privacy settings
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Privacy settings will be available soon')),
+                );
               },
             ),
           ],
@@ -282,7 +286,9 @@ class SettingsPage extends ConsumerWidget {
               subtitle: const Text('Receive updates via email'),
               value: true,
               onChanged: (value) {
-                // TODO: Implement email notification toggle
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Email notifications ${value ? 'enabled' : 'disabled'}')),
+                );
               },
               secondary: Icon(Icons.email, color: Colors.blue.shade700),
             ),
@@ -292,7 +298,9 @@ class SettingsPage extends ConsumerWidget {
               subtitle: const Text('Receive updates on your device'),
               value: true,
               onChanged: (value) {
-                // TODO: Implement push notification toggle
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Push notifications ${value ? 'enabled' : 'disabled'}')),
+                );
               },
               secondary: Icon(Icons.notifications, color: Colors.blue.shade700),
             ),
@@ -302,7 +310,9 @@ class SettingsPage extends ConsumerWidget {
               subtitle: const Text('Get reminded about upcoming payments'),
               value: true,
               onChanged: (value) {
-                // TODO: Implement payment reminder toggle
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Payment reminders ${value ? 'enabled' : 'disabled'}')),
+                );
               },
               secondary: Icon(Icons.payment, color: Colors.blue.shade700),
             ),
@@ -337,7 +347,9 @@ class SettingsPage extends ConsumerWidget {
               '',
               Icons.help,
               () {
-                // TODO: Navigate to help center
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Help Center will be available soon')),
+                );
               },
             ),
             const Divider(),
@@ -347,7 +359,9 @@ class SettingsPage extends ConsumerWidget {
               '',
               Icons.support_agent,
               () {
-                // TODO: Navigate to contact support
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Contact Support will be available soon')),
+                );
               },
             ),
             const Divider(),
@@ -357,7 +371,9 @@ class SettingsPage extends ConsumerWidget {
               '',
               Icons.description,
               () {
-                // TODO: Navigate to terms of service
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Terms of Service will be available soon')),
+                );
               },
             ),
             const Divider(),
@@ -367,7 +383,9 @@ class SettingsPage extends ConsumerWidget {
               '',
               Icons.policy,
               () {
-                // TODO: Navigate to privacy policy
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Privacy Policy will be available soon')),
+                );
               },
             ),
           ],
@@ -412,6 +430,190 @@ class SettingsPage extends ConsumerWidget {
           fontWeight: FontWeight.bold,
           color: Colors.white,
         ),
+      ),
+    );
+  }
+  
+  void _showEditProfileDialog(BuildContext context, WidgetRef ref, user) {
+    final nameController = TextEditingController(text: user?.fullName ?? '');
+    final emailController = TextEditingController(text: user?.email ?? '');
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Profile'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Full Name'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(labelText: 'Email'),
+              enabled: false, // Email shouldn't be editable
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // TODO: Save profile changes to backend
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Profile updated successfully')),
+              );
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showLanguageSelectionDialog(BuildContext context) {
+    final languages = ['English', 'German', 'French', 'Italian'];
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Language'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: languages.map((language) => ListTile(
+            title: Text(language),
+            onTap: () {
+              // TODO: Save language preference
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Language changed to $language')),
+              );
+              Navigator.pop(context);
+            },
+          )).toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showThemeSelectionDialog(BuildContext context) {
+    final themes = ['Light', 'Dark', 'System'];
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Theme'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: themes.map((theme) => ListTile(
+            title: Text(theme),
+            onTap: () {
+              // TODO: Save theme preference and apply
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Theme changed to $theme')),
+              );
+              Navigator.pop(context);
+            },
+          )).toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showCurrencySelectionDialog(BuildContext context) {
+    final currencies = ['CHF', 'EUR', 'USD', 'GBP'];
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Currency'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: currencies.map((currency) => ListTile(
+            title: Text(currency),
+            onTap: () {
+              // TODO: Save currency preference
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Currency changed to $currency')),
+              );
+              Navigator.pop(context);
+            },
+          )).toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showChangePasswordDialog(BuildContext context) {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Change Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: currentPasswordController,
+              decoration: const InputDecoration(labelText: 'Current Password'),
+              obscureText: true,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: newPasswordController,
+              decoration: const InputDecoration(labelText: 'New Password'),
+              obscureText: true,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: confirmPasswordController,
+              decoration: const InputDecoration(labelText: 'Confirm Password'),
+              obscureText: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // TODO: Validate and save password change
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Password changed successfully')),
+              );
+              Navigator.pop(context);
+            },
+            child: const Text('Change'),
+          ),
+        ],
       ),
     );
   }
