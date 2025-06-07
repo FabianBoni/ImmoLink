@@ -130,8 +130,7 @@ class _FilterPanelState extends State<FilterPanel> {
           IconButton(
             onPressed: () => Navigator.of(context).pop(),
             icon: const Icon(Icons.close, color: AppColors.textPrimary),
-          ),
-          const Expanded(
+          ),          Expanded(
             child: Center(
               child: Text(
                 'Filter',
@@ -147,12 +146,11 @@ class _FilterPanelState extends State<FilterPanel> {
       ),
     );
   }
-
   Widget _buildPropertyTypeSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Property Type', style: AppTypography.subhead),
+        Text('Property Type', style: AppTypography.subhead),
         const SizedBox(height: AppSpacing.itemSeparation),
         Wrap(
           spacing: AppSpacing.md,
@@ -196,12 +194,11 @@ class _FilterPanelState extends State<FilterPanel> {
       ),
     );
   }
-
   Widget _buildPriceRangeSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Price Range', style: AppTypography.subhead),
+        Text('Price Range', style: AppTypography.subhead),
         const SizedBox(height: AppSpacing.itemSeparation),
         _buildPriceHistogram(),
         const SizedBox(height: AppSpacing.md),
@@ -258,12 +255,11 @@ class _FilterPanelState extends State<FilterPanel> {
       ),
     );
   }
-
   Widget _buildBedroomsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Bedrooms', style: AppTypography.subhead),
+        Text('Bedrooms', style: AppTypography.subhead),
         const SizedBox(height: AppSpacing.itemSeparation),
         Row(
           children: List.generate(5, (index) {
@@ -281,12 +277,11 @@ class _FilterPanelState extends State<FilterPanel> {
       ],
     );
   }
-
   Widget _buildBedsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Beds', style: AppTypography.subhead),
+        Text('Beds', style: AppTypography.subhead),
         const SizedBox(height: AppSpacing.itemSeparation),
         Row(
           children: List.generate(5, (index) {
@@ -327,12 +322,11 @@ class _FilterPanelState extends State<FilterPanel> {
       ),
     );
   }
-
   Widget _buildAmenitiesSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Amenities', style: AppTypography.subhead),
+        Text('Amenities', style: AppTypography.subhead),
         const SizedBox(height: AppSpacing.itemSeparation),
         Wrap(
           spacing: AppSpacing.sm,

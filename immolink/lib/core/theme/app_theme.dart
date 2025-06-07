@@ -6,14 +6,12 @@ import 'app_spacing.dart';
 
 class AppTheme {
   static ThemeData get lightTheme {
-    return ThemeData(
-      // Color scheme
+    return ThemeData(      // Color scheme
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primaryAccent,
         brightness: Brightness.light,
         primary: AppColors.primaryAccent,
         surface: AppColors.surfaceCards,
-        background: AppColors.primaryBackground,
         error: AppColors.error,
       ),
       
@@ -21,7 +19,7 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.primaryBackground,
       
       // App Bar Theme
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.primaryBackground,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
@@ -70,8 +68,7 @@ class AppTheme {
           ),
         ),
       ),
-      
-      // Input Decoration Theme
+        // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surfaceCards,
@@ -89,6 +86,10 @@ class AppTheme {
         ),
         hintStyle: AppTypography.body.copyWith(
           color: AppColors.textPlaceholder,
+        ),
+        // Fix text color visibility
+        labelStyle: AppTypography.body.copyWith(
+          color: AppColors.textPrimary,
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.searchBarPadding,
@@ -117,9 +118,8 @@ class AppTheme {
         color: AppColors.textSecondary,
         size: AppSizes.iconMedium,
       ),
-      
-      // Text Theme
-      textTheme: const TextTheme(
+        // Text Theme
+      textTheme: TextTheme(
         displayLarge: AppTypography.heading1,
         displayMedium: AppTypography.heading2,
         headlineMedium: AppTypography.subhead,
@@ -140,13 +140,11 @@ class AppTheme {
   static ThemeData get darkTheme {
     return lightTheme.copyWith(
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF121212),
-      colorScheme: ColorScheme.fromSeed(
+      scaffoldBackgroundColor: const Color(0xFF121212),      colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primaryAccent,
         brightness: Brightness.dark,
         primary: AppColors.primaryAccent,
         surface: const Color(0xFF1E1E1E),
-        background: const Color(0xFF121212),
         error: AppColors.error,
       ),
     );

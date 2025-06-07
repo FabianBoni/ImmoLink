@@ -129,10 +129,9 @@ class SettingsPage extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            OutlinedButton(
+            const SizedBox(height: 16),            OutlinedButton(
               onPressed: () {
-                _showEditProfileDialog(context, ref, user);
+                context.push('/edit-profile');
               },
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: Colors.blue.shade700),
@@ -432,51 +431,7 @@ class SettingsPage extends ConsumerWidget {
           color: Colors.white,
         ),
       ),
-    );
-  }
-  
-  void _showEditProfileDialog(BuildContext context, WidgetRef ref, user) {
-    final nameController = TextEditingController(text: user?.fullName ?? '');
-    final emailController = TextEditingController(text: user?.email ?? '');
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Profile'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Full Name'),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-              enabled: false, // Email shouldn't be editable
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // TODO: Save profile changes to backend
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Profile updated successfully')),
-              );
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
+    );  }
   
   void _showLanguageSelectionDialog(BuildContext context) {
     final languages = ['English', 'German', 'French', 'Italian'];

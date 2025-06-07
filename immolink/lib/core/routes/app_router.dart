@@ -12,8 +12,10 @@ import 'package:immolink/features/payment/presentation/pages/make_payment_page.d
 import 'package:immolink/features/payment/presentation/pages/payment_history_page.dart';
 import 'package:immolink/features/property/presentation/pages/add_property_page.dart';
 import 'package:immolink/features/property/presentation/pages/property_details_page.dart';
+import 'package:immolink/features/property/presentation/pages/property_list_page.dart';
 import 'package:immolink/features/reports/presentation/pages/reports_page.dart';
 import 'package:immolink/features/settings/presentation/pages/settings_page.dart';
+import 'package:immolink/features/profile/presentation/pages/edit_profile_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -32,10 +34,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/home',
         builder: (context, state) => HomePage(),
+      ),      GoRoute(
+        path: '/add-property',
+        builder: (context, state) => AddPropertyPage(),
       ),
       GoRoute(
-        path: '/property/add',
-        builder: (context, state) => AddPropertyPage(),
+        path: '/properties',
+        builder: (context, state) => const PropertyListPage(),
       ),
       GoRoute(
         path: '/property/:id',
@@ -75,11 +80,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => MakePaymentPage(
           propertyId: state.uri.queryParameters['propertyId'],
         ),
-      ),
-      // Settings route
+      ),      // Settings route
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsPage(),
+      ),
+      // Edit Profile route
+      GoRoute(
+        path: '/edit-profile',
+        builder: (context, state) => const EditProfilePage(),
       ),
       // Reports route
       GoRoute(

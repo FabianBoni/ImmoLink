@@ -326,10 +326,10 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
             duration: const Duration(milliseconds: 150),
             height: 120,
             decoration: BoxDecoration(
-              color: selectedImages.isEmpty ? surface : accent.withOpacity(0.05),
+              color: selectedImages.isEmpty ? surface : accent.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: selectedImages.isEmpty ? divider : accent.withOpacity(0.3), 
+                color: selectedImages.isEmpty ? divider : accent.withValues(alpha: 0.3), 
                 width: 1.5,
               ),
             ),
@@ -371,7 +371,7 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

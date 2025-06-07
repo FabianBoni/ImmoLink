@@ -7,7 +7,6 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_top_bar.dart';
 import '../../../../core/widgets/app_search_bar.dart';
 import '../../../../core/widgets/category_tabs.dart';
-import '../../../../core/widgets/app_button.dart';
 
 class TenantDashboard extends ConsumerStatefulWidget {
   const TenantDashboard({super.key});
