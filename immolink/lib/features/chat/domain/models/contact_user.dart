@@ -5,6 +5,7 @@ class ContactUser {
   final String role;
   final String phone;
   final List<String> properties;
+  final String? status; // For tenant status: 'active' or 'available'
 
   ContactUser({
     required this.id,
@@ -13,6 +14,7 @@ class ContactUser {
     required this.role,
     required this.phone,
     required this.properties,
+    this.status,
   });
 
   factory ContactUser.fromMap(Map<String, dynamic> map) {
@@ -25,6 +27,7 @@ class ContactUser {
       properties: map['properties'] != null 
           ? List<String>.from(map['properties'])
           : [],
+      status: map['status'],
     );
   }
 
@@ -36,11 +39,12 @@ class ContactUser {
       'role': role,
       'phone': phone,
       'properties': properties,
+      'status': status,
     };
   }
 
   @override
   String toString() {
-    return 'ContactUser(id: $id, fullName: $fullName, email: $email, role: $role)';
+    return 'ContactUser(id: $id, fullName: $fullName, email: $email, role: $role, status: $status)';
   }
 }

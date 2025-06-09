@@ -41,7 +41,6 @@ class ContactService {
       return _getMockContacts(userRole);
     }
   }
-
   /// Get all users (for admin or general contact list)
   Future<List<ContactUser>> getAllUsers() async {
     try {
@@ -63,6 +62,28 @@ class ContactService {
     }
   }
 
+  /// Get all tenants from the database
+  Future<List<ContactUser>> getAllTenants() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$_apiUrl/users/tenants'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((json) => ContactUser.fromMap(json)).toList();
+      } else {
+        print('Failed to load tenants: ${response.statusCode}');
+        // Return mock data as fallback
+        return _getMockTenants();
+      }
+    } catch (e) {
+      print('Network error in getAllTenants: $e');
+      // Return mock data as fallback when offline
+      return _getMockTenants();
+    }
+  }
   /// Fallback mock data when API is unavailable
   List<ContactUser> _getMockContacts(String userRole) {
     if (userRole == 'landlord') {
@@ -114,5 +135,59 @@ class ContactService {
         ),
       ];
     }
+  }
+
+  /// Mock tenant data for fallback
+  List<ContactUser> _getMockTenants() {
+    return [
+      ContactUser(
+        id: '2',
+        fullName: 'Emma Weber',
+        email: 'emma.weber@email.com',
+        role: 'tenant',
+        phone: '+41 79 234 56 78',
+        properties: ['Seestrasse 456, Geneva'],
+      ),
+      ContactUser(
+        id: '3',
+        fullName: 'Mike Johnson',
+        email: 'mike.johnson@email.com',
+        role: 'tenant',
+        phone: '+41 79 345 67 89',
+        properties: ['Hauptstrasse 789, Basel'],
+      ),
+      ContactUser(
+        id: '4',
+        fullName: 'Sarah Wilson',
+        email: 'sarah.wilson@email.com',
+        role: 'tenant',
+        phone: '+41 79 456 78 90',
+        properties: ['Kirchgasse 101, Bern'],
+      ),
+      ContactUser(
+        id: '5',
+        fullName: 'David Brown',
+        email: 'david.brown@email.com',
+        role: 'tenant',
+        phone: '+41 79 567 89 01',
+        properties: ['Bahnhofstrasse 123, Zurich'],
+      ),
+      ContactUser(
+        id: '6',
+        fullName: 'Lisa Martinez',
+        email: 'lisa.martinez@email.com',
+        role: 'tenant',
+        phone: '+41 79 678 90 12',
+        properties: ['Steinengraben 45, Basel'],
+      ),
+      ContactUser(
+        id: '7',
+        fullName: 'Tom Anderson',
+        email: 'tom.anderson@email.com',
+        role: 'tenant',
+        phone: '+41 79 789 01 23',
+        properties: [],
+      ),
+    ];
   }
 }

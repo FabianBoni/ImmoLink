@@ -25,3 +25,9 @@ final allUsersProvider = FutureProvider<List<ContactUser>>((ref) async {
   final contactService = ref.watch(contactServiceProvider);
   return contactService.getAllUsers();
 });
+
+// Provider for all tenants (landlord's tenant management view)
+final allTenantsProvider = FutureProvider<List<ContactUser>>((ref) async {
+  final contactService = ref.watch(contactServiceProvider);
+  return contactService.getAllTenants();
+});
