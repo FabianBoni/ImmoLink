@@ -784,3 +784,4 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
            date1.day == date2.day;
   }
 }
+

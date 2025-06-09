@@ -492,3 +492,4 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
     );
   }
 }
+

@@ -937,7 +937,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [                  Text(
+                children: [
+                  Text(
                     property.address.street,
                     style: TextStyle(
                       fontSize: 16,
@@ -1380,29 +1381,12 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
         ],
       ),
       child: BottomNavigationBar(
-        currentIndex: _selectedIndex,        onTap: (index) {
+        currentIndex: _selectedIndex,
+        onTap: (index) {
           HapticFeedback.lightImpact();
           setState(() {
             _selectedIndex = index;
           });
-          
-          // Navigate to the appropriate pages
-          switch (index) {
-            case 0: // Dashboard - already here
-              break;
-            case 1: // Properties
-              context.push('/properties');
-              break;
-            case 2: // Messages
-              context.push('/conversations');
-              break;
-            case 3: // Reports
-              context.push('/reports');
-              break;
-            case 4: // Profile
-              context.push('/settings');
-              break;
-          }
         },
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.transparent,

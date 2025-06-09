@@ -364,3 +364,4 @@ class PropertyDetailsPage extends ConsumerWidget {
     );
   }
 }
+

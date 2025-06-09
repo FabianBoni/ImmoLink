@@ -105,3 +105,4 @@ class _InviteTenantDialogState extends ConsumerState<InviteTenantDialog> {
     Navigator.pop(context);
   }
 }
+

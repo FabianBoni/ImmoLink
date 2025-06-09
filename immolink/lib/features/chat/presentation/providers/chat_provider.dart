@@ -20,3 +20,4 @@ final chatMessagesProvider = StreamProvider.family<List<ChatMessage>, String>(
     }
   },
 );
+

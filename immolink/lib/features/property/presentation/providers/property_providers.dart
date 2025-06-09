@@ -76,3 +76,4 @@ final propertyProvider =
   final propertyService = ref.watch(propertyServiceProvider);
   return propertyService.getPropertyById(propertyId);
 });
+

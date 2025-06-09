@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:immolink/features/auth/presentation/providers/auth_provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -9,18 +11,24 @@ class SettingsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
-
+    final settings = ref.watch(settingsProvider);
+    
     return Scaffold(
+      backgroundColor: AppColors.primaryBackground,
       appBar: AppBar(
-        title: const Text('Settings'),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.blue.shade700, Colors.blue.shade900],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+        backgroundColor: AppColors.primaryBackground,
+        elevation: 0,
+        title: Text(
+          'Settings',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
           ),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+          onPressed: () => context.pop(),
         ),
       ),
       body: Container(
@@ -28,20 +36,19 @@ class SettingsPage extends ConsumerWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.blue.shade50, Colors.white],
+            colors: [AppColors.primaryBackground, AppColors.surfaceCards],
           ),
         ),
         child: ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
-
             _buildProfileSection(context, ref, currentUser),
             const SizedBox(height: 24),
-            _buildPreferencesSection(context),
+            _buildPreferencesSection(context, ref, settings),
             const SizedBox(height: 24),
             _buildSecuritySection(context),
             const SizedBox(height: 24),
-            _buildNotificationsSection(context),
+            _buildNotificationsSection(context, ref, settings),
             const SizedBox(height: 24),
             _buildSupportSection(context),
             const SizedBox(height: 24),
@@ -55,6 +62,7 @@ class SettingsPage extends ConsumerWidget {
   Widget _buildProfileSection(BuildContext context, WidgetRef ref, user) {
     return Card(
       elevation: 4,
+      color: AppColors.surfaceCards,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -63,11 +71,12 @@ class SettingsPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Profile',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 16),
@@ -75,13 +84,13 @@ class SettingsPage extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 40,
-                  backgroundColor: Colors.blue.shade200,
+                  backgroundColor: AppColors.primaryAccent.withValues(alpha: 0.2),
                   child: Text(
                     user?.fullName.substring(0, 1) ?? 'U',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppColors.primaryAccent,
                     ),
                   ),
                 ),
@@ -92,9 +101,10 @@ class SettingsPage extends ConsumerWidget {
                     children: [
                       Text(
                         user?.fullName ?? 'User',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -102,7 +112,7 @@ class SettingsPage extends ConsumerWidget {
                         user?.email ?? 'email@example.com',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.grey.shade700,
+                          color: AppColors.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -112,7 +122,7 @@ class SettingsPage extends ConsumerWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.blue.shade100,
+                          color: AppColors.accentLight,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
@@ -120,7 +130,7 @@ class SettingsPage extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Colors.blue.shade800,
+                            color: AppColors.primaryAccent,
                           ),
                         ),
                       ),
@@ -129,19 +139,20 @@ class SettingsPage extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),            OutlinedButton(
+            const SizedBox(height: 16),
+            OutlinedButton(
               onPressed: () {
                 context.push('/edit-profile');
               },
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: Colors.blue.shade700),
+                side: BorderSide(color: AppColors.primaryAccent),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: Text(
                 'Edit Profile',
-                style: TextStyle(color: Colors.blue.shade700),
+                style: TextStyle(color: AppColors.primaryAccent),
               ),
             ),
           ],
@@ -150,9 +161,10 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildPreferencesSection(BuildContext context) {
+  Widget _buildPreferencesSection(BuildContext context, WidgetRef ref, AppSettings settings) {
     return Card(
       elevation: 4,
+      color: AppColors.surfaceCards,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -161,41 +173,42 @@ class SettingsPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Preferences',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 16),
             _buildSettingItem(
               context,
               'Language',
-              'English',
+              settings.language,
               Icons.language,
               () {
-                _showLanguageSelectionDialog(context);
+                _showLanguageSelectionDialog(context, ref);
               },
             ),
-            const Divider(),
+            Divider(color: AppColors.dividerSeparator),
             _buildSettingItem(
               context,
               'Theme',
-              'Light',
+              settings.theme,
               Icons.brightness_6,
               () {
-                _showThemeSelectionDialog(context);
+                _showThemeSelectionDialog(context, ref);
               },
             ),
-            const Divider(),
+            Divider(color: AppColors.dividerSeparator),
             _buildSettingItem(
               context,
               'Currency',
-              'CHF',
+              settings.currency,
               Icons.attach_money,
               () {
-                _showCurrencySelectionDialog(context);
+                _showCurrencySelectionDialog(context, ref);
               },
             ),
           ],
@@ -207,6 +220,7 @@ class SettingsPage extends ConsumerWidget {
   Widget _buildSecuritySection(BuildContext context) {
     return Card(
       elevation: 4,
+      color: AppColors.surfaceCards,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -215,11 +229,12 @@ class SettingsPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Security',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 16),
@@ -229,10 +244,10 @@ class SettingsPage extends ConsumerWidget {
               '',
               Icons.lock,
               () {
-                _showChangePasswordDialog(context);
+                context.push('/change-password');
               },
             ),
-            const Divider(),
+            Divider(color: AppColors.dividerSeparator),
             _buildSettingItem(
               context,
               'Two-Factor Authentication',
@@ -244,7 +259,7 @@ class SettingsPage extends ConsumerWidget {
                 );
               },
             ),
-            const Divider(),
+            Divider(color: AppColors.dividerSeparator),
             _buildSettingItem(
               context,
               'Privacy Settings',
@@ -262,9 +277,10 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildNotificationsSection(BuildContext context) {
+  Widget _buildNotificationsSection(BuildContext context, WidgetRef ref, AppSettings settings) {
     return Card(
       elevation: 4,
+      color: AppColors.surfaceCards,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -273,48 +289,52 @@ class SettingsPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Notifications',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 16),
             SwitchListTile(
-              title: const Text('Email Notifications'),
-              subtitle: const Text('Receive updates via email'),
-              value: true,
+              title: Text('Email Notifications', style: TextStyle(color: AppColors.textPrimary)),
+              subtitle: Text('Receive updates via email', style: TextStyle(color: AppColors.textSecondary)),
+              value: settings.emailNotifications,
               onChanged: (value) {
+                ref.read(settingsProvider.notifier).updateEmailNotifications(value);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Email notifications ${value ? 'enabled' : 'disabled'}')),
                 );
               },
-              secondary: Icon(Icons.email, color: Colors.blue.shade700),
+              secondary: Icon(Icons.email, color: AppColors.primaryAccent),
             ),
-            const Divider(),
+            Divider(color: AppColors.dividerSeparator),
             SwitchListTile(
-              title: const Text('Push Notifications'),
-              subtitle: const Text('Receive updates on your device'),
-              value: true,
+              title: Text('Push Notifications', style: TextStyle(color: AppColors.textPrimary)),
+              subtitle: Text('Receive updates on your device', style: TextStyle(color: AppColors.textSecondary)),
+              value: settings.pushNotifications,
               onChanged: (value) {
+                ref.read(settingsProvider.notifier).updatePushNotifications(value);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Push notifications ${value ? 'enabled' : 'disabled'}')),
                 );
               },
-              secondary: Icon(Icons.notifications, color: Colors.blue.shade700),
+              secondary: Icon(Icons.notifications, color: AppColors.primaryAccent),
             ),
-            const Divider(),
+            Divider(color: AppColors.dividerSeparator),
             SwitchListTile(
-              title: const Text('Payment Reminders'),
-              subtitle: const Text('Get reminded about upcoming payments'),
-              value: true,
+              title: Text('Payment Reminders', style: TextStyle(color: AppColors.textPrimary)),
+              subtitle: Text('Get reminded about upcoming payments', style: TextStyle(color: AppColors.textSecondary)),
+              value: settings.paymentReminders,
               onChanged: (value) {
+                ref.read(settingsProvider.notifier).updatePaymentReminders(value);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text('Payment reminders ${value ? 'enabled' : 'disabled'}')),
                 );
               },
-              secondary: Icon(Icons.payment, color: Colors.blue.shade700),
+              secondary: Icon(Icons.payment, color: AppColors.primaryAccent),
             ),
           ],
         ),
@@ -325,6 +345,7 @@ class SettingsPage extends ConsumerWidget {
   Widget _buildSupportSection(BuildContext context) {
     return Card(
       elevation: 4,
+      color: AppColors.surfaceCards,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -333,11 +354,12 @@ class SettingsPage extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Support',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 16),
@@ -352,7 +374,7 @@ class SettingsPage extends ConsumerWidget {
                 );
               },
             ),
-            const Divider(),
+            Divider(color: AppColors.dividerSeparator),
             _buildSettingItem(
               context,
               'Contact Support',
@@ -364,7 +386,7 @@ class SettingsPage extends ConsumerWidget {
                 );
               },
             ),
-            const Divider(),
+            Divider(color: AppColors.dividerSeparator),
             _buildSettingItem(
               context,
               'Terms of Service',
@@ -376,7 +398,7 @@ class SettingsPage extends ConsumerWidget {
                 );
               },
             ),
-            const Divider(),
+            Divider(color: AppColors.dividerSeparator),
             _buildSettingItem(
               context,
               'Privacy Policy',
@@ -394,6 +416,30 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
+  Widget _buildLogoutButton(BuildContext context, WidgetRef ref) {
+    return ElevatedButton(
+      onPressed: () {
+        ref.read(authProvider.notifier).logout();
+        context.go('/login');
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.error,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+      child: Text(
+        'Log Out',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: AppColors.textOnAccent,
+        ),
+      ),
+    );
+  }
+
   Widget _buildSettingItem(
     BuildContext context,
     String title,
@@ -402,172 +448,115 @@ class SettingsPage extends ConsumerWidget {
     VoidCallback onTap,
   ) {
     return ListTile(
-      leading: Icon(icon, color: Colors.blue.shade700),
-      title: Text(title),
-      subtitle: subtitle.isNotEmpty ? Text(subtitle) : null,
-      trailing: const Icon(Icons.chevron_right),
+      leading: Icon(icon, color: AppColors.primaryAccent),
+      title: Text(title, style: TextStyle(color: AppColors.textPrimary)),
+      subtitle: subtitle.isNotEmpty ? Text(subtitle, style: TextStyle(color: AppColors.textSecondary)) : null,
+      trailing: Icon(Icons.chevron_right, color: AppColors.textTertiary),
       onTap: onTap,
     );
   }
 
-  Widget _buildLogoutButton(BuildContext context, WidgetRef ref) {
-    return ElevatedButton(
-      onPressed: () {
-        ref.read(authProvider.notifier).logout();
-        context.go('/login');
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.red.shade600,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-      child: const Text(
-        'Log Out',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      ),
-    );  }
-  
-  void _showLanguageSelectionDialog(BuildContext context) {
-    final languages = ['English', 'German', 'French', 'Italian'];
+  void _showLanguageSelectionDialog(BuildContext context, WidgetRef ref) {
+    final languages = {'English': 'en', 'German': 'de', 'French': 'fr', 'Italian': 'it'};
+    final settingsNotifier = ref.read(settingsProvider.notifier);
     
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Select Language'),
+        backgroundColor: AppColors.surfaceCards,
+        title: Text('Select Language', style: TextStyle(color: AppColors.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: languages.map((language) => ListTile(
-            title: Text(language),
-            onTap: () {
-              // TODO: Save language preference
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Language changed to $language')),
-              );
-              Navigator.pop(context);
+          children: languages.entries.map((entry) => ListTile(
+            title: Text(entry.key, style: TextStyle(color: AppColors.textPrimary)),
+            onTap: () async {
+              await settingsNotifier.updateLanguage(entry.value);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Language changed to ${entry.key}')),
+                );
+                Navigator.pop(context);
+              }
             },
           )).toList(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('Cancel', style: TextStyle(color: AppColors.primaryAccent)),
           ),
         ],
       ),
     );
   }
-  
-  void _showThemeSelectionDialog(BuildContext context) {
-    final themes = ['Light', 'Dark', 'System'];
+
+  void _showThemeSelectionDialog(BuildContext context, WidgetRef ref) {
+    final themes = {'Light': 'light', 'Dark': 'dark', 'System': 'system'};
+    final settingsNotifier = ref.read(settingsProvider.notifier);
     
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Select Theme'),
+        backgroundColor: AppColors.surfaceCards,
+        title: Text('Select Theme', style: TextStyle(color: AppColors.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: themes.map((theme) => ListTile(
-            title: Text(theme),
-            onTap: () {
-              // TODO: Save theme preference and apply
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Theme changed to $theme')),
-              );
-              Navigator.pop(context);
+          children: themes.entries.map((entry) => ListTile(
+            title: Text(entry.key, style: TextStyle(color: AppColors.textPrimary)),
+            trailing: Icon(
+              entry.value == 'light' ? Icons.light_mode :
+              entry.value == 'dark' ? Icons.dark_mode : Icons.brightness_auto,
+              color: AppColors.primaryAccent,
+            ),
+            onTap: () async {
+              await settingsNotifier.updateTheme(entry.value);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Theme changed to ${entry.key}')),
+                );
+                Navigator.pop(context);
+              }
             },
           )).toList(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('Cancel', style: TextStyle(color: AppColors.primaryAccent)),
           ),
         ],
       ),
     );
   }
-  
-  void _showCurrencySelectionDialog(BuildContext context) {
+
+  void _showCurrencySelectionDialog(BuildContext context, WidgetRef ref) {
     final currencies = ['CHF', 'EUR', 'USD', 'GBP'];
+    final settingsNotifier = ref.read(settingsProvider.notifier);
     
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Select Currency'),
+        backgroundColor: AppColors.surfaceCards,
+        title: Text('Select Currency', style: TextStyle(color: AppColors.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: currencies.map((currency) => ListTile(
-            title: Text(currency),
-            onTap: () {
-              // TODO: Save currency preference
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Currency changed to $currency')),
-              );
-              Navigator.pop(context);
+            title: Text(currency, style: TextStyle(color: AppColors.textPrimary)),
+            onTap: () async {
+              await settingsNotifier.updateCurrency(currency);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Currency changed to $currency')),
+                );
+                Navigator.pop(context);
+              }
             },
           )).toList(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  void _showChangePasswordDialog(BuildContext context) {
-    final currentPasswordController = TextEditingController();
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Change Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: currentPasswordController,
-              decoration: const InputDecoration(labelText: 'Current Password'),
-              obscureText: true,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: newPasswordController,
-              decoration: const InputDecoration(labelText: 'New Password'),
-              obscureText: true,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: confirmPasswordController,
-              decoration: const InputDecoration(labelText: 'Confirm Password'),
-              obscureText: true,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // TODO: Validate and save password change
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Password changed successfully')),
-              );
-              Navigator.pop(context);
-            },
-            child: const Text('Change'),
+            child: Text('Cancel', style: TextStyle(color: AppColors.primaryAccent)),
           ),
         ],
       ),

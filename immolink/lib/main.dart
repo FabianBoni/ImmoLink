@@ -35,3 +35,4 @@ class ImmoLink extends ConsumerWidget {
     );
   }
 }
+

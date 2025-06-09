@@ -15,3 +15,4 @@ final conversationsProvider = StreamProvider<List<Conversation>>((ref) async* {
     await Future.delayed(const Duration(seconds: 2));
   }
 });
+

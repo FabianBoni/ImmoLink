@@ -205,12 +205,12 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> with TickerPr
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppColors.primaryAccent.withOpacity(0.1),
-                      AppColors.luxuryGold.withOpacity(0.1),
+                      AppColors.primaryAccent.withValues(alpha: 0.1),
+                      AppColors.luxuryGold.withValues(alpha: 0.1),
                     ],
                   ),
                   border: Border.all(
-                    color: AppColors.primaryAccent.withOpacity(0.2),
+                    color: AppColors.primaryAccent.withValues(alpha: 0.2),
                     width: 2,
                   ),
                   boxShadow: [
@@ -256,7 +256,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> with TickerPr
                         end: Alignment.bottomRight,
                         colors: [
                           AppColors.primaryAccent,
-                          AppColors.primaryAccent.withOpacity(0.8),
+                          AppColors.primaryAccent.withValues(alpha: 0.8),
                         ],
                       ),
                       shape: BoxShape.circle,
@@ -266,7 +266,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> with TickerPr
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primaryAccent.withOpacity(0.3),
+                          color: AppColors.primaryAccent.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -311,13 +311,13 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> with TickerPr
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppColors.luxuryGold.withOpacity(0.1),
-                        AppColors.luxuryGold.withOpacity(0.05),
+                        AppColors.luxuryGold.withValues(alpha: 0.1),
+                        AppColors.luxuryGold.withValues(alpha: 0.05),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.luxuryGold.withOpacity(0.3),
+                      color: AppColors.luxuryGold.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
@@ -348,7 +348,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> with TickerPr
           end: Alignment.bottomRight,
           colors: [
             AppColors.surfaceCards,
-            AppColors.accentLight.withOpacity(0.3),
+            AppColors.accentLight.withValues(alpha: 0.3),
           ],
         ),
         borderRadius: BorderRadius.circular(24),
@@ -378,13 +378,13 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> with TickerPr
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        AppColors.primaryAccent.withOpacity(0.2),
-                        AppColors.primaryAccent.withOpacity(0.1),
+                        AppColors.primaryAccent.withValues(alpha: 0.2),
+                        AppColors.primaryAccent.withValues(alpha: 0.1),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: AppColors.primaryAccent.withOpacity(0.3),
+                      color: AppColors.primaryAccent.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
@@ -503,7 +503,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> with TickerPr
             )
           : null,
         filled: true,
-        fillColor: enabled ? AppColors.primaryBackground : AppColors.surfaceCards.withOpacity(0.5),
+        fillColor: enabled ? AppColors.primaryBackground : AppColors.surfaceCards.withValues(alpha: 0.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
@@ -535,7 +535,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> with TickerPr
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(
-            color: AppColors.borderLight.withOpacity(0.5),
+            color: AppColors.borderLight.withValues(alpha: 0.5),
             width: 1,
           ),
         ),
@@ -556,13 +556,13 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> with TickerPr
               end: Alignment.bottomRight,
               colors: [
                 AppColors.primaryAccent,
-                AppColors.primaryAccent.withOpacity(0.8),
+                AppColors.primaryAccent.withValues(alpha: 0.8),
               ],
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryAccent.withOpacity(0.3),
+                color: AppColors.primaryAccent.withValues(alpha: 0.3),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
@@ -728,3 +728,4 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> with TickerPr
     }
   }
 }
+

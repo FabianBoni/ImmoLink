@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../providers/conversations_provider.dart';
-import '../../domain/models/conversation.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../domain/models/contact_user.dart';
+import '../providers/contact_providers.dart';
 
-class ConversationsListPage extends ConsumerStatefulWidget {
-  const ConversationsListPage({super.key});
+class AddressBookPage extends ConsumerStatefulWidget {
+  const AddressBookPage({super.key});
 
   @override
-  ConsumerState<ConversationsListPage> createState() => _ConversationsListPageState();
+  ConsumerState<AddressBookPage> createState() => _AddressBookPageState();
 }
 
-class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
+class _AddressBookPageState extends ConsumerState<AddressBookPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -27,7 +27,8 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
   @override
   Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider);
-    final conversationsAsync = ref.watch(conversationsProvider);
+    final contactsAsync = ref.watch(userContactsProvider);
+    final isLandlord = currentUser?.role == 'landlord';
 
     return Scaffold(
       backgroundColor: AppColors.primaryBackground,
@@ -35,7 +36,7 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
         backgroundColor: AppColors.primaryBackground,
         elevation: 0,
         title: Text(
-          'Messages',
+          isLandlord ? 'Tenants' : 'Landlords',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -45,65 +46,64 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
           onPressed: () => context.pop(),
-        ),        actions: [
-          IconButton(
-            icon: Icon(Icons.contacts_outlined, color: AppColors.primaryAccent),
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              context.push('/address-book');
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.add_comment_outlined, color: AppColors.primaryAccent),
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              _showNewConversationDialog();
-            },
-          ),
-        ],
+        ),
       ),
       body: Column(
         children: [
           _buildSearchBar(),
           Expanded(
-            child: conversationsAsync.when(
-              data: (conversations) {
-                final filteredConversations = _filterConversations(conversations);
-                if (filteredConversations.isEmpty) {
-                  return _buildEmptyState();
+            child: contactsAsync.when(
+              data: (contacts) {
+                final filteredContacts = _filterContacts(contacts);
+                if (filteredContacts.isEmpty) {
+                  return _buildEmptyState(isLandlord);
                 }
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: filteredConversations.length,
+                  itemCount: filteredContacts.length,
                   itemBuilder: (context, index) {
-                    final conversation = filteredConversations[index];
-                    final isLandlord = currentUser?.role == 'landlord';
-                    final otherUserId = isLandlord 
-                        ? conversation.tenantId 
-                        : conversation.landlordId;
-                    
+                    final contact = filteredContacts[index];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: _buildConversationTile(
-                        context,
-                        conversation,
-                        otherUserId,
-                      ),
+                      child: _buildContactTile(contact, isLandlord),
                     );
                   },
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryAccent),
+                ),
+              ),
               error: (error, _) => Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.error_outline, size: 48, color: AppColors.error),
                     const SizedBox(height: 16),
-                    Text('Error loading conversations: $error'),
+                    Text(
+                      'Error loading contacts',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Please try again later',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                     const SizedBox(height: 16),
                     ElevatedButton(
-                      onPressed: () => ref.invalidate(conversationsProvider),
+                      onPressed: () => ref.invalidate(userContactsProvider),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryAccent,
+                        foregroundColor: Colors.white,
+                      ),
                       child: const Text('Retry'),
                     ),
                   ],
@@ -154,7 +154,7 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
-          hintText: 'Search conversations...',
+          hintText: 'Search contacts...',
           hintStyle: TextStyle(
             color: AppColors.textTertiary,
             fontSize: 15,
@@ -190,19 +190,21 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
     );
   }
 
-  List<Conversation> _filterConversations(List<Conversation> conversations) {
+  List<ContactUser> _filterContacts(List<ContactUser> contacts) {
     if (_searchQuery.isEmpty) {
-      return conversations;
+      return contacts;
     }
     
-    return conversations.where((conversation) {
+    return contacts.where((contact) {
       final searchLower = _searchQuery.toLowerCase();
-      return conversation.propertyAddress.toLowerCase().contains(searchLower) ||
-             conversation.lastMessage.toLowerCase().contains(searchLower);
+      return contact.fullName.toLowerCase().contains(searchLower) ||
+             contact.email.toLowerCase().contains(searchLower) ||
+             contact.properties.any((property) => 
+                 property.toLowerCase().contains(searchLower));
     }).toList();
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool isLandlord) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -221,14 +223,18 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.chat_bubble_outline,
+              Icons.contacts_outlined,
               size: 48,
               color: AppColors.primaryAccent,
             ),
           ),
           const SizedBox(height: 24),
           Text(
-            _searchQuery.isNotEmpty ? 'No conversations found' : 'No conversations yet',
+            _searchQuery.isNotEmpty 
+                ? 'No contacts found' 
+                : isLandlord 
+                    ? 'No tenants yet' 
+                    : 'No landlords found',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -239,22 +245,21 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
           Text(
             _searchQuery.isNotEmpty 
                 ? 'Try adjusting your search terms'
-                : 'Start a conversation with your properties',
+                : isLandlord
+                    ? 'Add properties to connect with tenants'
+                    : 'Your landlord contacts will appear here',
             style: TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildConversationTile(
-    BuildContext context, 
-    Conversation conversation,
-    String otherUserId,
-  ) {
+  Widget _buildContactTile(ContactUser contact, bool isLandlord) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -279,7 +284,7 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
         ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        contentPadding: const EdgeInsets.all(20),
         leading: Container(
           width: 50,
           height: 50,
@@ -288,27 +293,32 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppColors.primaryAccent,
-                AppColors.primaryAccent.withValues(alpha: 0.7),
+                isLandlord ? AppColors.success : AppColors.luxuryGold,
+                (isLandlord ? AppColors.success : AppColors.luxuryGold).withValues(alpha: 0.7),
               ],
             ),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryAccent.withValues(alpha: 0.3),
+                color: (isLandlord ? AppColors.success : AppColors.luxuryGold).withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: Icon(
-            Icons.person,
-            color: Colors.white,
-            size: 24,
+          child: Center(
+            child: Text(
+              contact.fullName.isNotEmpty ? contact.fullName[0].toUpperCase() : 'U',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ),
         title: Text(
-          'Property: ${conversation.propertyAddress}',
+          contact.fullName,
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 16,
@@ -319,43 +329,117 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            Text(
-              conversation.lastMessage,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
+            Row(
+              children: [
+                Icon(
+                  Icons.email_outlined,
+                  size: 14,
+                  color: AppColors.textTertiary,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    contact.email,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),            if (contact.phone.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(
+                    Icons.phone_outlined,
+                    size: 14,
+                    color: AppColors.textTertiary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    contact.phone,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              conversation.lastMessageTime.toString(),
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textTertiary,
-                fontWeight: FontWeight.w400,
+            ],
+            const SizedBox(height: 8),
+            if (contact.properties.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryAccent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  isLandlord 
+                      ? contact.properties.first 
+                      : '${contact.properties.length} ${contact.properties.length == 1 ? 'Property' : 'Properties'}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.primaryAccent,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-            ),
           ],
         ),
-        trailing: Icon(
-          Icons.arrow_forward_ios,
-          color: AppColors.primaryAccent,
-          size: 16,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: Icon(
+                Icons.chat_bubble_outline,
+                color: AppColors.primaryAccent,
+                size: 20,
+              ),
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                // Navigate to chat with this contact
+                _startConversationWith(contact);
+              },
+            ),            if (contact.phone.isNotEmpty)
+              IconButton(
+                icon: Icon(
+                  Icons.phone_outlined,
+                  color: AppColors.success,
+                  size: 20,
+                ),
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  _callContact(contact);
+                },
+              ),
+          ],
         ),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          context.push(
-            '/chat/${conversation.id}?otherUserId=$otherUserId',
-          );
-        },
       ),
     );
   }
 
-  void _showNewConversationDialog() {
+  void _startConversationWith(ContactUser contact) {
+    // TODO: Implement start conversation logic
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Starting conversation with ${contact.fullName}...'),
+        backgroundColor: AppColors.primaryAccent,
+        action: SnackBarAction(
+          label: 'Open Chat',
+          textColor: Colors.white,
+          onPressed: () {
+            // For now, navigate to conversations list
+            context.push('/conversations');
+          },
+        ),
+      ),
+    );
+  }
+
+  void _callContact(ContactUser contact) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -365,10 +449,10 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
             borderRadius: BorderRadius.circular(20),
           ),
           title: Text(
-            'New Conversation',
+            'Call ${contact.fullName}',
             style: TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -376,39 +460,37 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Select a property to start a conversation:',
+                'Do you want to call ${contact.phone}?',
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontSize: 14,
                 ),
               ),
               const SizedBox(height: 16),
-              // TODO: Add property selection list here
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryBackground,
+                  color: AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColors.borderLight,
+                    color: AppColors.success.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.info_outline,
-                      color: AppColors.primaryAccent,
+                      Icons.phone,
+                      color: AppColors.success,
                       size: 20,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Property selection will be implemented with database integration',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
+                    const SizedBox(width: 8),                    Text(
+                      contact.phone,
+                      style: TextStyle(
+                        color: AppColors.success,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -429,23 +511,23 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
             ),
             ElevatedButton(
               onPressed: () {
-                // TODO: Implement create conversation logic
                 Navigator.of(context).pop();
+                // TODO: Implement actual phone call functionality
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('New conversation feature coming soon!'),
-                    backgroundColor: AppColors.primaryAccent,
+                    content: Text('Phone call functionality will be implemented'),
+                    backgroundColor: AppColors.success,
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryAccent,
+                backgroundColor: AppColors.success,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Create'),
+              child: const Text('Call'),
             ),
           ],
         );

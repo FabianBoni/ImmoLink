@@ -5,6 +5,7 @@ import 'package:immolink/features/auth/presentation/pages/register_page.dart';
 import 'package:immolink/features/auth/presentation/providers/auth_provider.dart';
 import 'package:immolink/features/chat/presentation/pages/chat_page.dart';
 import 'package:immolink/features/chat/presentation/pages/conversations_list_page.dart';
+import 'package:immolink/features/chat/presentation/pages/address_book_page.dart';
 import 'package:immolink/features/home/presentation/pages/home_page.dart';
 import 'package:immolink/features/maintenance/presentation/pages/maintenance_management_page.dart';
 import 'package:immolink/features/maintenance/presentation/pages/maintenance_request_page.dart';
@@ -15,6 +16,7 @@ import 'package:immolink/features/property/presentation/pages/property_details_p
 import 'package:immolink/features/property/presentation/pages/property_list_page.dart';
 import 'package:immolink/features/reports/presentation/pages/reports_page.dart';
 import 'package:immolink/features/settings/presentation/pages/settings_page.dart';
+import 'package:immolink/features/settings/presentation/pages/change_password_page.dart';
 import 'package:immolink/features/profile/presentation/pages/edit_profile_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -54,10 +56,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           conversationId: state.pathParameters['conversationId']!,
           otherUserName: state.uri.queryParameters['otherUser'] ?? 'User',
         ),
-      ),
-      GoRoute(
+      ),      GoRoute(
         path: '/conversations',
         builder: (context, state) => const ConversationsListPage(),
+      ),
+      GoRoute(
+        path: '/address-book',
+        builder: (context, state) => const AddressBookPage(),
       ),
       // Maintenance routes
       GoRoute(
@@ -84,6 +89,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsPage(),
+      ),
+      // Change Password route
+      GoRoute(
+        path: '/change-password',
+        builder: (context, state) => const ChangePasswordPage(),
       ),
       // Edit Profile route
       GoRoute(
@@ -112,3 +122,4 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
   );
 });
+
