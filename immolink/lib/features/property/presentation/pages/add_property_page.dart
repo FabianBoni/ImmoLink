@@ -9,6 +9,10 @@ import 'package:immolink/features/property/presentation/providers/property_provi
 import 'package:uuid/uuid.dart';
 
 class AddPropertyPage extends ConsumerStatefulWidget {
+  final Property? propertyToEdit;
+  
+  const AddPropertyPage({super.key, this.propertyToEdit});
+
   @override
   ConsumerState<AddPropertyPage> createState() => _AddPropertyPageState();
 }
@@ -45,7 +49,6 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
   static const Color textCaption = Color(0xFF8E8E93);
   static const Color success = Color(0xFF34C759);
   static const Color error = Color(0xFFFF3B30);
-
   @override
   void initState() {
     super.initState();
@@ -57,6 +60,21 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
     _animationController.forward();
+    
+    // Populate fields if editing existing property
+    if (widget.propertyToEdit != null) {
+      _populateFields(widget.propertyToEdit!);
+    }
+  }
+
+  void _populateFields(Property property) {
+    _addressController.text = property.address.street;
+    _cityController.text = property.address.city;
+    _postalCodeController.text = property.address.postalCode;
+    _rentController.text = property.rentAmount.toString();
+    _sizeController.text = property.details.size.toString();
+    _roomsController.text = property.details.rooms.toString();
+    selectedAmenities = List.from(property.details.amenities);
   }
 
   @override
@@ -82,10 +100,9 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: textPrimary, size: 20),
           onPressed: () => context.pop(),
-        ),
-        title: const Text(
-          'Add Property',
-          style: TextStyle(
+        ),        title: Text(
+          widget.propertyToEdit != null ? 'Edit Property' : 'Add Property',
+          style: const TextStyle(
             color: textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -131,11 +148,11 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
   }
 
   Widget _buildLoadingWidget() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
+          const SizedBox(
             width: 32,
             height: 32,
             child: CircularProgressIndicator(
@@ -143,10 +160,10 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
               strokeWidth: 2.5,
             ),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           Text(
-            'Creating property...',
-            style: TextStyle(
+            widget.propertyToEdit != null ? 'Updating property...' : 'Creating property...',
+            style: const TextStyle(
               color: textCaption,
               fontSize: 16,
               fontWeight: FontWeight.w500,
@@ -159,12 +176,13 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
   }
 
   Widget _buildHeaderSection() {
+    final isEditing = widget.propertyToEdit != null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'New Property',
-          style: TextStyle(
+        Text(
+          isEditing ? 'Edit Property' : 'New Property',
+          style: const TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.w700,
             color: textPrimary,
@@ -174,8 +192,8 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
         ),
         const SizedBox(height: 8),
         Text(
-          'Add property details to get started',
-          style: TextStyle(
+          isEditing ? 'Update your property details' : 'Add property details to get started',
+          style: const TextStyle(
             fontSize: 16,
             color: textCaption,
             fontWeight: FontWeight.w400,
@@ -473,10 +491,9 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(27),
           ),
-        ),
-        child: const Text(
-          'Create Property',
-          style: TextStyle(
+        ),        child: Text(
+          widget.propertyToEdit != null ? 'Update Property' : 'Create Property',
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.2,

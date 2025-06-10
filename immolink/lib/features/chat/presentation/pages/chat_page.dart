@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:immolink/features/auth/presentation/providers/auth_provider.dart';
 import 'package:immolink/features/chat/domain/models/chat_message.dart';
-import 'package:immolink/features/chat/presentation/providers/chat_provider.dart';
+import 'package:immolink/features/chat/presentation/providers/messages_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -14,11 +12,13 @@ class ChatPage extends ConsumerStatefulWidget {
   final String conversationId;
   final String otherUserName;
   final String? otherUserAvatar;
+  final String? otherUserId;
 
   const ChatPage({
     required this.conversationId,
     required this.otherUserName,
     this.otherUserAvatar,
+    this.otherUserId,
     super.key,
   });
 
@@ -56,7 +56,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
 
   @override
   Widget build(BuildContext context) {
-    final messagesStream = ref.watch(chatMessagesProvider(widget.conversationId));
+    final messagesAsync = ref.watch(conversationMessagesProvider(widget.conversationId));
     final currentUser = ref.watch(currentUserProvider);
 
     return Scaffold(
@@ -65,7 +65,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
       body: Column(
         children: [
           Expanded(
-            child: messagesStream.when(
+            child: messagesAsync.when(
               data: (messages) => _buildMessagesList(messages, currentUser?.id ?? ''),
               loading: () => const Center(
                 child: CircularProgressIndicator(
@@ -81,6 +81,11 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
                     Text(
                       'Failed to load messages',
                       style: AppTypography.subhead.copyWith(color: AppColors.error),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => ref.invalidate(conversationMessagesProvider(widget.conversationId)),
+                      child: const Text('Retry'),
                     ),
                   ],
                 ),
@@ -158,13 +163,6 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.videocam_outlined, color: AppColors.textPrimary),
-          onPressed: () {
-            HapticFeedback.lightImpact();
-            // TODO: Implement video call
-          },
-        ),
-        IconButton(
           icon: const Icon(Icons.call_outlined, color: AppColors.textPrimary),
           onPressed: () {
             HapticFeedback.lightImpact();
@@ -183,6 +181,10 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
   }
 
   Widget _buildMessagesList(List<ChatMessage> messages, String currentUserId) {
+    if (messages.isEmpty) {
+      return _buildEmptyMessagesState();
+    }
+
     return AnimatedBuilder(
       animation: _slideAnimation,
       builder: (context, child) {
@@ -211,43 +213,97 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
     );
   }
 
+  Widget _buildEmptyMessagesState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primaryAccent.withValues(alpha: 0.1),
+                  AppColors.primaryAccent.withValues(alpha: 0.05),
+                ],
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.chat_bubble_outline,
+              size: 48,
+              color: AppColors.primaryAccent,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'No messages yet',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Start the conversation with ${widget.otherUserName}',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDateSeparator(DateTime date) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceCards,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        _formatDate(date),
-        style: AppTypography.caption.copyWith(
-          color: AppColors.textSecondary,
-          fontWeight: FontWeight.w500,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceCards,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            _formatDate(date),
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildMessageBubble(ChatMessage message, bool isMe) {
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 2),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        child: Column(
-          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.md,
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          if (!isMe) ...[
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: AppColors.primaryAccent.withValues(alpha: 0.1),
+              child: Text(
+                widget.otherUserName[0].toUpperCase(),
+                style: TextStyle(
+                  color: AppColors.primaryAccent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 gradient: isMe
                     ? LinearGradient(
@@ -260,50 +316,47 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
                       )
                     : null,
                 color: isMe ? null : AppColors.surfaceCards,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(18),
-                  topRight: const Radius.circular(18),
-                  bottomLeft: Radius.circular(isMe ? 18 : 4),
-                  bottomRight: Radius.circular(isMe ? 4 : 18),
+                borderRadius: BorderRadius.circular(18),
+                border: isMe ? null : Border.all(
+                  color: AppColors.borderLight,
+                  width: 1,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    message.content,
+                    style: AppTypography.body.copyWith(
+                      color: isMe ? Colors.white : AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _formatTime(message.timestamp),
+                    style: AppTypography.caption.copyWith(
+                      color: isMe 
+                          ? Colors.white.withValues(alpha: 0.7)
+                          : AppColors.textTertiary,
+                    ),
                   ),
                 ],
-              ),
-              child: Text(
-                message.content,
-                style: AppTypography.body.copyWith(
-                  color: isMe ? Colors.white : AppColors.textPrimary,
-                  height: 1.4,
-                ),
               ),
             ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  _formatTime(message.timestamp),
-                  style: AppTypography.caption.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                if (isMe) ...[
-                  const SizedBox(width: 4),
-                  Icon(
-                    message.isRead ? Icons.done_all : Icons.done,
-                    size: 16,
-                    color: message.isRead ? AppColors.primaryAccent : AppColors.textSecondary,
-                  ),
-                ],
-              ],
+          ),
+          if (isMe) ...[
+            const SizedBox(width: 8),
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: AppColors.primaryAccent.withValues(alpha: 0.1),
+              child: Icon(
+                Icons.person,
+                color: AppColors.primaryAccent,
+                size: 16,
+              ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -315,7 +368,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
         color: AppColors.primaryBackground,
         border: Border(
           top: BorderSide(
-            color: AppColors.dividerSeparator,
+            color: AppColors.borderLight,
             width: 0.5,
           ),
         ),
@@ -323,13 +376,6 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
       child: SafeArea(
         child: Row(
           children: [
-            IconButton(
-              icon: const Icon(Icons.attach_file, color: AppColors.textSecondary),
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                _showAttachmentOptions();
-              },
-            ),
             Expanded(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -337,7 +383,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
                   color: AppColors.surfaceCards,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: AppColors.dividerSeparator,
+                    color: AppColors.borderLight,
                     width: 0.5,
                   ),
                 ),
@@ -349,7 +395,7 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
                   decoration: InputDecoration(
                     hintText: 'Type a message...',
                     hintStyle: AppTypography.body.copyWith(
-                      color: AppColors.textPlaceholder,
+                      color: AppColors.textTertiary,
                     ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
@@ -404,384 +450,134 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
     );
   }
 
-  void _sendMessage(String senderId) {
+  void _sendMessage(String senderId) async {
     if (_messageController.text.trim().isEmpty) return;
 
     final content = _messageController.text.trim();
     _messageController.clear();
     setState(() {
       _isTyping = false;
-    });    // Create a new message to send
-    final message = ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      senderId: senderId,
-      receiverId: '', // This would be set by the backend
-      content: content,
-      timestamp: DateTime.now(),
-      isRead: false,
-    );
-
-    // Send the message using the chat service
-    ref.read(chatServiceProvider).sendMessage(message, widget.conversationId);
-
-    // Scroll to bottom
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
     });
 
-    HapticFeedback.lightImpact();
-  }
-
-  void _showAttachmentOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.primaryBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Send Attachment',
-              style: AppTypography.subhead.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [                _buildAttachmentOption(
-                  icon: Icons.photo_camera,
-                  label: 'Camera',
-                  color: AppColors.primaryAccent,
-                  onTap: () => _pickImage('camera'),
-                ),
-                _buildAttachmentOption(
-                  icon: Icons.photo_library,
-                  label: 'Gallery',
-                  color: Colors.green,
-                  onTap: () => _pickImage('gallery'),
-                ),
-                _buildAttachmentOption(
-                  icon: Icons.attach_file,
-                  label: 'Document',
-                  color: Colors.orange,
-                  onTap: _pickDocument,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xl),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAttachmentOption({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pop(context);
-        onTap();
-      },
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: color, size: 28),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: AppTypography.caption.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }  void _pickImage(String source) async {
     try {
-      HapticFeedback.lightImpact();
-      final ImagePicker picker = ImagePicker();
-      XFile? image;
+      await ref.read(messageSenderProvider.notifier).sendMessage(
+        conversationId: widget.conversationId,
+        senderId: senderId,
+        receiverId: widget.otherUserId ?? '',
+        content: content,
+      );
       
-      if (source == 'camera') {
-        image = await picker.pickImage(
-          source: ImageSource.camera,
-          maxWidth: 1920,
-          maxHeight: 1080,
-          imageQuality: 85,
-        );
-      } else {
-        image = await picker.pickImage(
-          source: ImageSource.gallery,
-          maxWidth: 1920,
-          maxHeight: 1080,
-          imageQuality: 85,
-        );
-      }
-        if (image != null) {
-        final selectedImage = image; // Capture non-null image
-        // TODO: Upload image to cloud storage and get URL
-        // For now, just show a success message
+      // Scroll to bottom after sending
+      _scrollToBottom();
+    } catch (error) {
+      // Show error message
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('Image selected: ${selectedImage.name}'),
-                ),
-              ],
-            ),
-            backgroundColor: AppColors.primaryAccent,
-            behavior: SnackBarBehavior.floating,
-            action: SnackBarAction(
-              label: 'SEND',
-              textColor: Colors.white,
-              onPressed: () {
-                // Send image message
-                _sendImageMessage(selectedImage.path, selectedImage.name);
-              },
-            ),
+            content: Text('Failed to send message: $error'),
+            backgroundColor: AppColors.error,
           ),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.error, color: Colors.white),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text('Error picking image: ${e.toString()}'),
-              ),
-            ],
-          ),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
     }
   }
 
-  void _pickDocument() async {
-    try {
-      HapticFeedback.lightImpact();
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'doc', 'docx', 'txt', 'xlsx', 'pptx', 'jpg', 'jpeg', 'png'],
-        allowMultiple: false,
-      );
-
-      if (result != null) {
-        final file = result.files.first;
-        final fileSize = file.size;
-        final maxSize = 10 * 1024 * 1024; // 10MB limit
-        
-        if (fileSize > maxSize) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Row(
-                children: [
-                  Icon(Icons.warning, color: Colors.white),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text('File size exceeds 10MB limit'),
-                  ),
-                ],
-              ),
-              backgroundColor: AppColors.error,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-          return;
-        }
-        
-        // TODO: Upload document to cloud storage and get URL
-        // For now, just show a success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('Document selected: ${file.name}'),
-                ),
-              ],
-            ),
-            backgroundColor: AppColors.primaryAccent,
-            behavior: SnackBarBehavior.floating,
-            action: SnackBarAction(
-              label: 'SEND',
-              textColor: Colors.white,
-              onPressed: () {
-                // TODO: Send document message
-                _sendDocumentMessage(file.path!, file.name);
-              },
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.error, color: Colors.white),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text('Error picking document: ${e.toString()}'),
-              ),
-            ],
-          ),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
       );
     }
-  }
-
-  void _sendImageMessage(String imagePath, String imageName) {
-    // TODO: Implement actual image upload and URL generation
-    // For now, send a placeholder message
-    final message = ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      senderId: ref.read(currentUserProvider)?.id ?? '',
-      receiverId: '', // This would be set by the backend
-      content: '📷 Image: $imageName',
-      timestamp: DateTime.now(),
-      isRead: false,
-    );
-
-    ref.read(chatServiceProvider).sendMessage(message, widget.conversationId);
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Image sent successfully!'),
-        backgroundColor: AppColors.primaryAccent,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  void _sendDocumentMessage(String documentPath, String documentName) {
-    // TODO: Implement actual document upload and URL generation
-    // For now, send a placeholder message
-    final message = ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      senderId: ref.read(currentUserProvider)?.id ?? '',
-      receiverId: '', // This would be set by the backend
-      content: '📄 Document: $documentName',
-      timestamp: DateTime.now(),
-      isRead: false,
-    );
-
-    ref.read(chatServiceProvider).sendMessage(message, widget.conversationId);
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Document sent successfully!'),
-        backgroundColor: AppColors.primaryAccent,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   void _showChatOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.primaryBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(AppSpacing.xl),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceCards,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Chat Options',
-              style: AppTypography.subhead.copyWith(
-                fontWeight: FontWeight.w600,
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.borderLight,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
-            ListTile(
-              leading: const Icon(Icons.info_outline, color: AppColors.primaryAccent),
-              title: const Text('View Contact Info'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Show contact info
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.block, color: AppColors.error),
-              title: const Text('Block User'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Block user
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.report, color: AppColors.error),
-              title: const Text('Report'),
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: Report user
-              },
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [                  Text(
+                    'Chat Options',
+                    style: AppTypography.heading2.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ListTile(
+                    leading: Icon(Icons.block, color: AppColors.error),
+                    title: const Text('Block User'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: Implement block user
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.report, color: AppColors.warning),
+                    title: const Text('Report Conversation'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: Implement report
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.delete, color: AppColors.error),
+                    title: const Text('Delete Conversation'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      // TODO: Implement delete conversation
+                    },
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  String _formatTime(DateTime dateTime) {
-    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-  }
-
-  String _formatDate(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime).inDays;
-    
-    if (difference == 0) {
-      return 'Today';
-    } else if (difference == 1) {
-      return 'Yesterday';
-    } else if (difference < 7) {
-      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-      return days[dateTime.weekday - 1];
-    } else {
-      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
-    }
   }
 
   bool _isSameDay(DateTime date1, DateTime date2) {
     return date1.year == date2.year &&
            date1.month == date2.month &&
            date1.day == date2.day;
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
+    
+    if (_isSameDay(date, now)) {
+      return 'Today';
+    } else if (_isSameDay(date, yesterday)) {
+      return 'Yesterday';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  String _formatTime(DateTime time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 }
 

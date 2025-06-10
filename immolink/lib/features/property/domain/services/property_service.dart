@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/property.dart';
 import 'package:immolink/core/config/db_config.dart';
+import '../../../chat/domain/services/chat_service.dart';
 
 class PropertyService {
   final String _apiUrl = DbConfig.apiUrl;
@@ -39,28 +40,30 @@ class PropertyService {
       throw Exception('Failed to add property: ${response.statusCode}');
     }
   }
-
   Future<void> inviteTenant(String propertyId, String tenantId) async {
     final prefs = await SharedPreferences.getInstance();
     final landlordId = prefs.getString('userId');
 
-    // Update property with tenant
-    await http.post(
-      Uri.parse('$_apiUrl/properties/$propertyId/invite-tenant'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'tenantId': tenantId}),
-    );
+    if (landlordId == null) {
+      throw Exception('User not authenticated');
+    }
 
-    // Create conversation
-    await http.post(
-      Uri.parse('$_apiUrl/chat/conversations'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'propertyId': propertyId,
-        'landlordId': landlordId,
-        'tenantId': tenantId
-      }),
-    );
+    // Use the chat service to send invitation and create conversation
+    final chatService = ChatService();
+    
+    try {
+      await chatService.inviteTenant(
+        propertyId: propertyId,
+        landlordId: landlordId,
+        tenantId: tenantId,
+        message: 'Hello! I would like to invite you to rent my property. Please let me know if you are interested.',
+      );
+      
+      print('Invitation sent successfully to tenant $tenantId for property $propertyId');
+    } catch (e) {
+      print('Error sending invitation: $e');
+      throw Exception('Failed to send invitation: $e');
+    }
   }
 
   Stream<List<Property>> getLandlordProperties(String landlordId) async* {
@@ -128,6 +131,21 @@ class PropertyService {
     } else {
       throw Exception(
           'Failed to load property details: ${response.statusCode}');
+    }
+  }
+
+  // Future-based method for tenant dashboard
+  Future<List<Property>> getAllPropertiesFuture() async {
+    final response = await http.get(
+      Uri.parse('$_apiUrl/properties'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((json) => Property.fromMap(json)).toList();
+    } else {
+      throw Exception('Failed to load properties');
     }
   }
 }

@@ -420,23 +420,67 @@ class _AddressBookPageState extends ConsumerState<AddressBookPage> {
       ),
     );
   }
-
-  void _startConversationWith(ContactUser contact) {
-    // TODO: Implement start conversation logic
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Starting conversation with ${contact.fullName}...'),
-        backgroundColor: AppColors.primaryAccent,
-        action: SnackBarAction(
-          label: 'Open Chat',
-          textColor: Colors.white,
-          onPressed: () {
-            // For now, navigate to conversations list
-            context.push('/conversations');
-          },
-        ),
-      ),
-    );
+  void _startConversationWith(ContactUser contact) async {
+    try {
+      HapticFeedback.lightImpact();
+      
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return Center(
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceCards,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryAccent),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Starting conversation...',
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+      
+      // Simulate conversation creation
+      await Future.delayed(const Duration(milliseconds: 1500));
+      
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+        
+        // Navigate to chat page
+        context.push('/chat/new?otherUserId=${contact.id}&otherUserName=${contact.fullName}');
+      }
+    } catch (e) {
+      // Close loading dialog if open
+      if (mounted) {
+        Navigator.of(context).pop();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to start conversation: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   void _callContact(ContactUser contact) {

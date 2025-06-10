@@ -33,14 +33,18 @@ final landlordPropertiesProvider = StreamProvider<List<Property>>((ref) {
 });
 
 // Tenant-specific properties provider  
-final tenantPropertiesProvider = StreamProvider<List<Property>>((ref) {
-  final currentUser = ref.watch(currentUserProvider);
-  if (currentUser == null || currentUser.role != 'tenant') {
-    return Stream.value([]);
+final tenantPropertiesProvider = FutureProvider<List<Property>>((ref) async {
+  try {
+    final propertyService = ref.watch(propertyServiceProvider);
+    // For tenant dashboard, show all available properties
+    final properties = await propertyService.getAllPropertiesFuture();
+    print('Tenant properties loaded: ${properties.length}');
+    return properties;
+  } catch (e) {
+    print('Error in tenantPropertiesProvider: $e');
+    // Return empty list instead of throwing error
+    return <Property>[];
   }
-
-  final propertyService = ref.watch(propertyServiceProvider);
-  return propertyService.getTenantProperties(currentUser.id);
 });
 
 final tenantInvitationProvider =

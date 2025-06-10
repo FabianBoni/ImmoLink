@@ -6,19 +6,10 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_top_bar.dart';
 import '../../../../core/widgets/app_search_bar.dart';
+import '../../../../core/widgets/category_tabs.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../property/presentation/providers/property_providers.dart';
 import '../../../property/domain/models/property.dart';
-
-class CategoryTab {
-  final String label;
-  final IconData icon;
-
-  const CategoryTab({
-    required this.label,
-    required this.icon,
-  });
-}
 
 class TenantDashboard extends ConsumerStatefulWidget {
   const TenantDashboard({super.key});
@@ -46,7 +37,9 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
       return 'Good afternoon';
     }
     return 'Good evening';
-  }  @override
+  }
+
+  @override
   Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider);
     final propertiesAsync = ref.watch(tenantPropertiesProvider);
@@ -63,7 +56,8 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
           // Handle notification tap
         },
       ),
-      body: propertiesAsync.when(        data: (properties) => SingleChildScrollView(
+      body: propertiesAsync.when(
+        data: (properties) => SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -74,8 +68,8 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
               const SizedBox(height: AppSpacing.itemSeparation),
               _buildCategoryTabs(),
               const SizedBox(height: AppSpacing.sectionSeparation),
-              if (_getFilteredProperties(properties).isNotEmpty) 
-                _buildPropertyCard(_getFilteredProperties(properties).first)
+              if (properties.isNotEmpty) 
+                _buildPropertyCard(properties.first)
               else
                 _buildNoPropertyCard(),
               const SizedBox(height: AppSpacing.sectionSeparation),
@@ -168,68 +162,16 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
       ),
     );
   }
+
   Widget _buildCategoryTabs() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.horizontalPadding),
-      child: Container(
-        height: 48,
-        decoration: BoxDecoration(
-          color: AppColors.surfaceCards,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadowColor,
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: _categories.asMap().entries.map((entry) {
-            final index = entry.key;
-            final category = entry.value;
-            final isSelected = _selectedCategoryIndex == index;
-            
-            return Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedCategoryIndex = index;
-                  });
-                },
-                child: Container(
-                  margin: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primaryAccent : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          category.icon,
-                          size: 16,
-                          color: isSelected ? Colors.white : AppColors.textSecondary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          category.label,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isSelected ? Colors.white : AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ),
+    return CategoryTabs(
+      tabs: _categories,
+      selectedIndex: _selectedCategoryIndex,
+      onTabSelected: (index) {
+        setState(() {
+          _selectedCategoryIndex = index;
+        });
+      },
     );
   }
 
@@ -401,21 +343,19 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
               const SizedBox(width: AppSpacing.md),
               _buildActionButton('Report Issue', Icons.warning_rounded, AppColors.warning),
               const SizedBox(width: AppSpacing.md),
-              _buildActionButton('Message Landlord', Icons.message, AppColors.primaryAccent, () {
-                // Navigate to conversations list or create new chat
-                context.push('/conversations');
-              }),
+              _buildActionButton('Message Landlord', Icons.message, AppColors.primaryAccent),
             ],
           ),
         ],
       ),
     );
   }
-  Widget _buildActionButton(String label, IconData icon, Color color, [VoidCallback? onTap]) {
+
+  Widget _buildActionButton(String label, IconData icon, Color color) {
     return Expanded(
       child: GestureDetector(
-        onTap: onTap ?? () {
-          // Default navigation based on the action button
+        onTap: () {
+          // Navigate based on the action button
           if (label == 'Pay Rent') {
             context.push('/payments/make');
           } else if (label == 'Report Issue') {
@@ -658,35 +598,5 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
       ),
       label: '',
     );
-  }
-
-  List<Property> _getFilteredProperties(List<Property> properties) {
-    // Filter properties based on selected category
-    switch (_selectedCategoryIndex) {
-      case 0: // All
-        return properties;
-      case 1: // Apartments
-        return properties.where((p) => 
-          p.details.amenities.any((amenity) => 
-            amenity.toLowerCase().contains('apartment') ||
-            p.details.rooms >= 2
-          )
-        ).toList();
-      case 2: // Houses
-        return properties.where((p) => 
-          p.details.amenities.any((amenity) => 
-            amenity.toLowerCase().contains('house') ||
-            amenity.toLowerCase().contains('garden') ||
-            p.details.rooms >= 4
-          )
-        ).toList();
-      case 3: // Studios
-        return properties.where((p) => 
-          p.details.rooms <= 2 &&
-          p.details.size <= 50
-        ).toList();
-      default:
-        return properties;
-    }
   }
 }

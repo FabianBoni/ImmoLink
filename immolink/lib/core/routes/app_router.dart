@@ -50,14 +50,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => PropertyDetailsPage(
           propertyId: state.pathParameters['id']!,
         ),
-      ),
-      GoRoute(
+      ),      GoRoute(
         path: '/chat/:conversationId',
         builder: (context, state) => ChatPage(
           conversationId: state.pathParameters['conversationId']!,
           otherUserName: state.uri.queryParameters['otherUser'] ?? 'User',
+          otherUserId: state.uri.queryParameters['otherUserId'],
         ),
-      ),      GoRoute(
+      ),GoRoute(
         path: '/conversations',
         builder: (context, state) => const ConversationsListPage(),
       ),

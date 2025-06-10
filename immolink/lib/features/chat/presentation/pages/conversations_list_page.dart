@@ -255,6 +255,11 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
     Conversation conversation,
     String otherUserId,
   ) {
+    final isLandlord = ref.watch(currentUserProvider)?.role == 'landlord';
+    final otherUserName = isLandlord 
+        ? conversation.tenantName 
+        : conversation.landlordName;
+
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -348,7 +353,7 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
         onTap: () {
           HapticFeedback.lightImpact();
           context.push(
-            '/chat/${conversation.id}?otherUserId=$otherUserId',
+            '/chat/${conversation.id}?otherUserId=$otherUserId&otherUserName=$otherUserName',
           );
         },
       ),
