@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:immolink/features/auth/presentation/providers/auth_provider.dart';
 import 'package:immolink/features/chat/domain/models/chat_message.dart';
 import 'package:immolink/features/chat/presentation/providers/messages_provider.dart';
+import 'package:immolink/features/chat/presentation/providers/chat_service_provider.dart' as chat_providers;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -360,7 +361,6 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
       ),
     );
   }
-
   Widget _buildMessageInput(String currentUserId) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.horizontalPadding),
@@ -374,82 +374,103 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
         ),
       ),
       child: SafeArea(
-        child: Row(
+        child: Column(
           children: [
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceCards,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: AppColors.borderLight,
-                    width: 0.5,
+            Row(
+              children: [
+                // Attachment button
+                IconButton(
+                  icon: Icon(
+                    Icons.attach_file,
+                    color: AppColors.textSecondary,
+                    size: 24,
+                  ),
+                  onPressed: () => _showAttachmentOptions(),
+                ),
+                // Emoji button
+                IconButton(
+                  icon: Icon(
+                    Icons.emoji_emotions_outlined,
+                    color: AppColors.textSecondary,
+                    size: 24,
+                  ),
+                  onPressed: () => _showEmojiPicker(),
+                ),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceCards,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: AppColors.borderLight,
+                        width: 0.5,
+                      ),
+                    ),
+                    child: TextField(
+                      controller: _messageController,
+                      style: AppTypography.body.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Type a message...',
+                        hintStyle: AppTypography.body.copyWith(
+                          color: AppColors.textTertiary,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                      ),
+                      maxLines: null,
+                      textCapitalization: TextCapitalization.sentences,
+                      onChanged: (text) {
+                        setState(() {
+                          _isTyping = text.isNotEmpty;
+                        });
+                      },
+                    ),
                   ),
                 ),
-                child: TextField(
-                  controller: _messageController,
-                  style: AppTypography.body.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Type a message...',
-                    hintStyle: AppTypography.body.copyWith(
-                      color: AppColors.textTertiary,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-                  ),
-                  maxLines: null,
-                  textCapitalization: TextCapitalization.sentences,
-                  onChanged: (text) {
-                    setState(() {
-                      _isTyping = text.isNotEmpty;
-                    });
+                const SizedBox(width: AppSpacing.sm),
+                GestureDetector(
+                  onTap: () {
+                    if (_messageController.text.trim().isNotEmpty) {
+                      _sendMessage(currentUserId);
+                    }
                   },
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            GestureDetector(
-              onTap: () {
-                if (_messageController.text.trim().isNotEmpty) {
-                  _sendMessage(currentUserId);
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.primaryAccent,
-                      AppColors.primaryAccent.withValues(alpha: 0.8),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryAccent.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.primaryAccent,
+                          AppColors.primaryAccent.withValues(alpha: 0.8),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryAccent.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                  ],
+                    child: const Icon(
+                      Icons.send,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
                 ),
-                child: const Icon(
-                  Icons.send,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
+              ],
             ),
           ],
         ),
       ),
     );
   }
-
   void _sendMessage(String senderId) async {
     if (_messageController.text.trim().isEmpty) return;
 
@@ -457,15 +478,40 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
     _messageController.clear();
     setState(() {
       _isTyping = false;
-    });
+    });    try {      // Get the real current user ID from auth provider
+      final currentUser = ref.read(currentUserProvider);
+      final realSenderId = currentUser?.id ?? 'unknown-user';
+      
+      print('Sending message with senderId: $realSenderId, otherUserId: ${widget.otherUserId}');
 
-    try {
-      await ref.read(messageSenderProvider.notifier).sendMessage(
-        conversationId: widget.conversationId,
-        senderId: senderId,
-        receiverId: widget.otherUserId ?? '',
-        content: content,
-      );
+      // Handle new conversation creation
+      if (widget.conversationId == 'new') {
+        final chatService = ref.read(chat_providers.chatServiceProvider);        final newConversationId = await chatService.createNewConversation(
+          otherUserId: widget.otherUserId ?? '',
+          initialMessage: content,
+          currentUserId: realSenderId, // Use the real current user ID
+        );
+        
+        // Update conversation ID for future messages
+        print('Created new conversation: $newConversationId');
+        
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Message sent to ${widget.otherUserName}!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } else {        // Send message to existing conversation
+        await ref.read(messageSenderProvider.notifier).sendMessage(
+          conversationId: widget.conversationId,
+          senderId: realSenderId, // Use the real current user ID
+          receiverId: widget.otherUserId ?? '',
+          content: content,
+        );
+      }
       
       // Scroll to bottom after sending
       _scrollToBottom();
@@ -557,6 +603,226 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
     );
   }
 
+  void _showAttachmentOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: AppColors.surfaceCards,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.borderLight,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Send Attachment',
+                    style: AppTypography.heading2.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildAttachmentOption(
+                        icon: Icons.photo_library,
+                        label: 'Gallery',
+                        color: AppColors.primaryAccent,
+                        onTap: () {
+                          Navigator.pop(context);
+                          _pickImageFromGallery();
+                        },
+                      ),
+                      _buildAttachmentOption(
+                        icon: Icons.camera_alt,
+                        label: 'Camera',
+                        color: AppColors.success,
+                        onTap: () {
+                          Navigator.pop(context);
+                          _pickImageFromCamera();
+                        },
+                      ),
+                      _buildAttachmentOption(
+                        icon: Icons.attach_file,
+                        label: 'Document',
+                        color: AppColors.warning,
+                        onTap: () {
+                          Navigator.pop(context);
+                          _pickDocument();
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentOption({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 30,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEmojiPicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.4,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceCards,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.borderLight,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Emojis',
+                    style: AppTypography.heading2.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, color: AppColors.textSecondary),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: GridView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 8,
+                  childAspectRatio: 1,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                ),
+                itemCount: _commonEmojis.length,
+                itemBuilder: (context, index) {
+                  final emoji = _commonEmojis[index];
+                  return GestureDetector(
+                    onTap: () {
+                      _messageController.text += emoji;
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryBackground,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(
+                          emoji,
+                          style: const TextStyle(fontSize: 24),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _pickImageFromGallery() {
+    // TODO: Implement image picker from gallery
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Gallery picker will be implemented'),
+        backgroundColor: AppColors.primaryAccent,
+      ),
+    );
+  }
+
+  void _pickImageFromCamera() {
+    // TODO: Implement camera picker
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Camera picker will be implemented'),
+        backgroundColor: AppColors.primaryAccent,
+      ),
+    );
+  }
+
+  void _pickDocument() {
+    // TODO: Implement document picker
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Document picker will be implemented'),
+        backgroundColor: AppColors.primaryAccent,
+      ),
+    );
+  }
+
   bool _isSameDay(DateTime date1, DateTime date2) {
     return date1.year == date2.year &&
            date1.month == date2.month &&
@@ -579,5 +845,24 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
   String _formatTime(DateTime time) {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
+  // Common emojis for quick access
+  static const List<String> _commonEmojis = [
+    '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂',
+    '🙂', '🙃', '😉', '😊', '😇', '😍', '🤩', '😘',
+    '😗', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨',
+    '🧐', '🤓', '😎', '🤩', '😏', '😒', '😞', '😔',
+    '😟', '😕', '🙁', '😣', '😖', '😫', '😩', '🥺',
+    '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳',
+    '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗',
+    '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬',
+    '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴',
+    '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧',
+    '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹',
+    '💀', '☠️', '👻', '👽', '👾', '🤖', '🎃', '😺',
+    '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾',
+    '❤️', '🧡', '💛', '💚', '💙', '💜', '🤎', '🖤',
+    '🤍', '💔', '❣️', '💕', '💞', '💓', '💗', '💖',
+    '💘', '💝', '💟', '👍', '👎', '👌', '🤏', '✌️',
+  ];
 }
 

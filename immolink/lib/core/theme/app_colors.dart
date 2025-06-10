@@ -12,7 +12,8 @@ class AppColors {
   static const Color luxuryGold = Color(0xFFD4AF37); // Premium gold accent
   static const Color accentLight = Color(0xFFF0F4FF); // Light blue wash
   static const Color goldLight = Color(0xFFFDF8E7); // Light gold wash
-    // Text Colors - High contrast for luxury feel
+  
+  // Text Colors - High contrast for luxury feel
   static const Color textPrimary = Color(0xFF0F172A); // Deep charcoal
   static const Color textSecondary = Color(0xFF475569); // Medium gray
   static const Color textTertiary = Color(0xFF94A3B8); // Light gray
@@ -31,7 +32,8 @@ class AppColors {
   static const Color warningLight = Color(0xFFFEF3C7); // Light amber
   static const Color errorLight = Color(0xFFFEF2F2); // Light red
   static const Color infoLight = Color(0xFFF0F9FF); // Light sky
-    // Premium Effects & Shadows
+  
+  // Premium Effects & Shadows
   static const Color shadowColor = Color(0x08000000); // Subtle shadow
   static const Color shadowColorMedium = Color(0x10000000); // Medium shadow
   static const Color shadowColorStrong = Color(0x18000000); // Strong shadow

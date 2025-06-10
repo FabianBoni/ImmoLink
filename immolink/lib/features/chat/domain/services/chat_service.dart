@@ -46,7 +46,6 @@ class ChatService {
     }
     throw Exception('Failed to fetch messages');
   }
-
   Future<void> sendMessage({
     required String conversationId,
     required String senderId,
@@ -60,11 +59,32 @@ class ChatService {
         'senderId': senderId,
         'receiverId': receiverId,
         'content': content,
+        'timestamp': DateTime.now().toIso8601String(),
+        'messageType': 'text',
+        'isRead': false,
       }),
     );
 
     if (response.statusCode != 201) {
-      throw Exception('Failed to send message');
+      throw Exception('Failed to send message: ${response.body}');
+    }
+    
+    // Also update the conversation's last message
+    await _updateConversationLastMessage(conversationId, content);
+  }
+  
+  Future<void> _updateConversationLastMessage(String conversationId, String lastMessage) async {
+    try {
+      await http.put(
+        Uri.parse('$_apiUrl/conversations/$conversationId'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'lastMessage': lastMessage,
+          'lastMessageTime': DateTime.now().toIso8601String(),
+        }),
+      );
+    } catch (e) {
+      print('Error updating conversation: $e');
     }
   }
 
@@ -112,19 +132,26 @@ class ChatService {
     if (response.statusCode != 201) {
       throw Exception('Failed to send invitation');
     }
-  }
-  // Create a new conversation
+  }  // Create a new conversation
   Future<String> createNewConversation({
     required String otherUserId,
     required String initialMessage,
+    String? currentUserId,
   }) async {
     try {
+      // Use provided currentUserId or fallback to a temp ID
+      final actualCurrentUserId = currentUserId ?? 'current-user-id';
+      
       final response = await http.post(
         Uri.parse('$_apiUrl/conversations'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'otherUserId': otherUserId,
           'initialMessage': initialMessage,
+          'participants': [actualCurrentUserId, otherUserId],
+          'lastMessage': initialMessage,
+          'lastMessageTime': DateTime.now().toIso8601String(),
+          'createdAt': DateTime.now().toIso8601String(),
         }),
       );
 
@@ -132,7 +159,7 @@ class ChatService {
         final data = json.decode(response.body);
         return data['conversationId'];
       } else {
-        throw Exception('Failed to create conversation');
+        throw Exception('Failed to create conversation: ${response.body}');
       }
     } catch (e) {
       print('Error creating conversation: $e');

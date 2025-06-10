@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:immolink/features/auth/presentation/pages/login_page.dart';
@@ -109,6 +110,27 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/tenants',
         builder: (context, state) => const TenantsPage(),
+      ),
+      GoRoute(
+        path: '/chat/new',
+        builder: (context, state) {
+          final otherUserId = state.uri.queryParameters['otherUserId'];
+          final otherUserName = state.uri.queryParameters['otherUserName'];
+          
+          if (otherUserId == null || otherUserName == null) {
+            return const Scaffold(
+              body: Center(
+                child: Text('Invalid chat parameters'),
+              ),
+            );
+          }
+          
+          return ChatPage(
+            conversationId: 'new',
+            otherUserId: otherUserId,
+            otherUserName: otherUserName,
+          );
+        },
       ),
     ],
     redirect: (context, state) {

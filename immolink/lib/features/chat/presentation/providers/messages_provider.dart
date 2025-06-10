@@ -16,10 +16,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       : super(const AsyncValue.loading()) {
     _loadMessages();
   }
-
   Future<void> _loadMessages() async {    try {
       final messages = await _chatService.getMessages(_conversationId);
-      state = AsyncValue.data(messages.reversed.toList()); // Reverse to show newest at bottom
+      // Messages are already sorted chronologically from backend
+      state = AsyncValue.data(messages);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
     }

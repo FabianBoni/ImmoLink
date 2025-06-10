@@ -143,8 +143,7 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
             ),
             child: CircleAvatar(
               radius: 24,
-              backgroundColor: AppColors.surfaceCards,
-              child: const Icon(
+              backgroundColor: AppColors.surfaceCards,              child: const Icon(
                 Icons.person_outline,
                 color: AppColors.textSecondary,
                 size: AppSizes.iconMedium,
@@ -232,14 +231,13 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
       ),
     );
   }
-
   Widget _buildPropertyCard(Property property) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.horizontalPadding),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.primaryBackground,
-          borderRadius: BorderRadius.circular(AppBorderRadius.cardsButtons),
+          borderRadius: BorderRadius.circular(12.0), // cardsButtons radius
           boxShadow: [
             BoxShadow(
               color: AppColors.shadowColor,
@@ -252,16 +250,16 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
           children: [
             ClipRRect(
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppBorderRadius.cardsButtons),
+                top: Radius.circular(12.0), // cardsButtons radius
               ),
               child: Container(
-                height: AppSizes.propertyCardImageHeight,
+                height: 120.0, // propertyCardImageHeight
                 width: double.infinity,
                 color: AppColors.surfaceCards,
                 child: const Icon(
                   Icons.home,
                   color: AppColors.textPlaceholder,
-                  size: AppSizes.iconLarge,
+                  size: 32.0, // iconLarge
                 ),
               ),
             ),
@@ -276,10 +274,9 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Row(
-                    children: [
-                      const Icon(
+                    children: [                      const Icon(
                         Icons.location_on_outlined,
-                        size: AppSizes.iconSmall,
+                        size: 16.0, // iconSmall
                         color: AppColors.textSecondary,
                       ),
                       const SizedBox(width: AppSpacing.xs),
@@ -305,10 +302,9 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
   Widget _buildNoPropertyCard() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.horizontalPadding),
-      child: Container(
-        decoration: BoxDecoration(
+      child: Container(        decoration: BoxDecoration(
           color: AppColors.primaryBackground,
-          borderRadius: BorderRadius.circular(AppBorderRadius.cardsButtons),
+          borderRadius: BorderRadius.circular(12.0), // cardsButtons
           boxShadow: [
             BoxShadow(
               color: AppColors.shadowColor,
@@ -359,10 +355,9 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
   Widget _buildStatusItem(String label, String value, Color color) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
+        padding: const EdgeInsets.all(AppSpacing.md),        decoration: BoxDecoration(
           color: color == AppColors.success ? AppColors.successLight : AppColors.accentLight,
-          borderRadius: BorderRadius.circular(AppBorderRadius.cardsButtons),
+          borderRadius: BorderRadius.circular(12.0),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -425,10 +420,9 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
           }
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-          decoration: BoxDecoration(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),          decoration: BoxDecoration(
             color: AppColors.primaryBackground,
-            borderRadius: BorderRadius.circular(AppBorderRadius.cardsButtons),
+            borderRadius: BorderRadius.circular(12.0), // cardsButtons
             boxShadow: [
               BoxShadow(
                 color: AppColors.shadowColor,
@@ -443,7 +437,7 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
               Icon(
                 icon,
                 color: color,
-                size: AppSizes.iconMedium,
+                size: 24.0, // iconMedium
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
@@ -502,10 +496,9 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
 
   Widget _buildActivityItem(String title, String description, IconData icon, Color color, String time) {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.all(AppSpacing.md),      decoration: BoxDecoration(
         color: AppColors.primaryBackground,
-        borderRadius: BorderRadius.circular(AppBorderRadius.cardsButtons),
+        borderRadius: BorderRadius.circular(12.0),
         boxShadow: [
           BoxShadow(
             color: AppColors.shadowColor,
@@ -520,12 +513,12 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppBorderRadius.cardsButtons),
+              borderRadius: BorderRadius.circular(12.0),
             ),
             child: Icon(
               icon,
               color: color,
-              size: AppSizes.iconSmall,
+              size: 16.0,
             ),
           ),
           const SizedBox(width: AppSpacing.md),
@@ -639,11 +632,10 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
+          children: [            Icon(
               icon,
               color: isSelected ? AppColors.primaryAccent : AppColors.textPlaceholder,
-              size: AppSizes.iconMedium,
+              size: 24.0, // iconMedium
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
