@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:immolink/features/property/presentation/widgets/invite_tenant_dialog.dart';
 import '../../domain/models/property.dart';
 import '../providers/property_providers.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class PropertyDetailsPage extends ConsumerWidget {
   final String propertyId;
@@ -18,7 +20,7 @@ class PropertyDetailsPage extends ConsumerWidget {
       body: propertyAsync.when(
         data: (property) => CustomScrollView(
           slivers: [
-            _buildAppBar(property),
+            _buildAppBar(property, ref),
             SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -28,7 +30,7 @@ class PropertyDetailsPage extends ConsumerWidget {
                   _buildDescription(context, property),
                   _buildAmenities(context, property),
                   _buildLocation(context, property),
-                  _buildFinancialDetails(context, property),
+                  _buildFinancialDetails(context, property, ref),
                   const SizedBox(height: 100), // Bottom padding for FAB
                 ],
               ),
@@ -37,9 +39,8 @@ class PropertyDetailsPage extends ConsumerWidget {
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => Center(child: Text('Error: $error')),
-      ),
-      floatingActionButton: propertyAsync.when(
-        data: (property) => _buildContactButton(context, property),
+      ),      floatingActionButton: propertyAsync.when(
+        data: (property) => _buildContactButton(context, property, ref),
         loading: () => null,
         error: (_, __) => null,
       ),
@@ -62,36 +63,6 @@ class PropertyDetailsPage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => InviteTenantDialog(propertyId: property.id),
-    );
-  }
-
-  Widget _buildAppBar(Property property) {
-    return SliverAppBar(
-      expandedHeight: 300,
-      pinned: true,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.network(
-              'https://picsum.photos/800/500?random=${property.id}',
-              fit: BoxFit.cover,
-            ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.7),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -259,7 +230,7 @@ class PropertyDetailsPage extends ConsumerWidget {
                 ),
                 label: Text(amenity),
                 backgroundColor:
-                    Theme.of(context).primaryColor.withOpacity(0.1),
+                    Theme.of(context).primaryColor.withValues(alpha: 0.1),
               );
             }).toList(),
           ),
@@ -297,8 +268,9 @@ class PropertyDetailsPage extends ConsumerWidget {
       ),
     );
   }
-
-  Widget _buildFinancialDetails(BuildContext context, Property property) {
+  Widget _buildFinancialDetails(BuildContext context, Property property, WidgetRef ref) {
+    final currentUser = ref.watch(currentUserProvider);
+    
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -309,7 +281,9 @@ class PropertyDetailsPage extends ConsumerWidget {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 16),
-          _buildInviteTenantButton(context, property),
+          // Only show invite tenant button for landlords
+          if (currentUser?.role == 'landlord')
+            _buildInviteTenantButton(context, property),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -353,8 +327,14 @@ class PropertyDetailsPage extends ConsumerWidget {
       ),
     );
   }
-
-  Widget _buildContactButton(BuildContext context, Property property) {
+  Widget _buildContactButton(BuildContext context, Property property, WidgetRef ref) {
+    final currentUser = ref.watch(currentUserProvider);
+    
+    // Hide contact button for landlords
+    if (currentUser?.role == 'landlord') {
+      return const SizedBox.shrink();
+    }
+    
     return FloatingActionButton.extended(
       onPressed: () {
         // Implement contact functionality
@@ -363,4 +343,48 @@ class PropertyDetailsPage extends ConsumerWidget {
       label: const Text('Contact Landlord'),
     );
   }
+  Widget _buildAppBar(Property property, WidgetRef ref) {
+    final currentUser = ref.watch(currentUserProvider);
+    
+    return SliverAppBar(
+      expandedHeight: 300,
+      pinned: true,
+      actions: [
+        // Only show edit button if user is the landlord
+        if (currentUser?.role == 'landlord')
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                context.push('/add-property', extra: property);
+              },
+            ),
+          ),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              'https://picsum.photos/800/500?random=${property.id}',
+              fit: BoxFit.cover,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.7),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+

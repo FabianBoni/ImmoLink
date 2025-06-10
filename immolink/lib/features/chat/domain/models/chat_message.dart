@@ -14,14 +14,15 @@ class ChatMessage {
     required this.timestamp,
     this.isRead = false,
   });
-
   factory ChatMessage.fromMap(Map<String, dynamic> map) {
     return ChatMessage(
-      id: map['id'],
-      senderId: map['senderId'],
-      receiverId: map['receiverId'],
-      content: map['content'],
-      timestamp: DateTime.parse(map['timestamp']),
+      id: map['_id']?.toString() ?? map['id']?.toString() ?? '',
+      senderId: map['senderId'] ?? '',
+      receiverId: map['receiverId'] ?? '',
+      content: map['content'] ?? '',
+      timestamp: map['timestamp'] != null 
+          ? DateTime.parse(map['timestamp'])
+          : DateTime.now(),
       isRead: map['isRead'] ?? false,
     );
   }
@@ -37,3 +38,4 @@ class ChatMessage {
     };
   }
 }
+

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:immolink/features/auth/presentation/providers/auth_provider.dart';
 import 'package:immolink/features/property/domain/models/property.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../features/property/presentation/providers/property_providers.dart';
 
 class LandlordDashboard extends ConsumerStatefulWidget {
@@ -18,18 +19,6 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
   late Animation<double> _fadeAnimation;
-
-  // Modern design system colors
-  static const Color background = Color(0xFFFFFFFF);
-  static const Color surface = Color(0xFFF2F2F2);
-  // static const Color divider = Color(0xFFE0E0E0);
-  static const Color accent = Color(0xFF007AFF);
-  static const Color textPrimary = Color(0xFF000000);
-  static const Color textSecondary = Color(0xFF212121);
-  static const Color textCaption = Color(0xFF8E8E93);
-  static const Color success = Color(0xFF34C759);
-  static const Color warning = Color.fromARGB(255, 105, 96, 82);
-  static const Color error = Color(0xFFFF3B30);
 
   @override
   void initState() {
@@ -57,9 +46,9 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
   Widget build(BuildContext context) {
     final propertiesAsync = ref.watch(landlordPropertiesProvider);
     final currentUser = ref.watch(currentUserProvider);
-
+    
     return Scaffold(
-      backgroundColor: background,
+      backgroundColor: AppColors.primaryBackground,
       appBar: _buildAppBar(currentUser?.fullName ?? 'Property Manager'),
       body: SafeArea(
         child: propertiesAsync.when(
@@ -75,8 +64,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
                       HapticFeedback.lightImpact();
                       await Future.delayed(const Duration(seconds: 1));
                     },
-                    color: accent,
-                    backgroundColor: background,
+                    color: AppColors.primaryAccent,
+                    backgroundColor: AppColors.primaryBackground,
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(20),
@@ -110,7 +99,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
               width: 32,
               height: 32,
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(accent),
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryAccent),
                 strokeWidth: 2.5,
               ),
             ),
@@ -119,14 +108,14 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline, size: 48, color: Colors.red),
+                Icon(Icons.error_outline, size: 48, color: AppColors.error),
                 const SizedBox(height: 16),
                 Text(
                   'Something went wrong',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: textPrimary,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -134,7 +123,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
                   'Please try again later',
                   style: TextStyle(
                     fontSize: 14,
-                    color: textCaption,
+                    color: AppColors.textTertiary,
                   ),
                 ),
               ],
@@ -146,15 +135,16 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
       floatingActionButton: _buildFAB(),
     );
   }
+
   PreferredSizeWidget _buildAppBar(String name) {
     return AppBar(
-      backgroundColor: background,
+      backgroundColor: AppColors.primaryBackground,
       elevation: 0,
       systemOverlayStyle: SystemUiOverlayStyle.dark,
-      title: const Text(
+      title: Text(
         'Dashboard',
         style: TextStyle(
-          color: textPrimary,
+          color: AppColors.textPrimary,
           fontSize: 18,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.3,
@@ -163,7 +153,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
       centerTitle: true,
       actions: [
         IconButton(
-          icon: const Icon(Icons.notifications_outlined, color: textPrimary, size: 24),
+          icon: Icon(Icons.notifications_outlined, color: AppColors.textPrimary, size: 24),
           onPressed: () => HapticFeedback.lightImpact(),
         ),
       ],
@@ -174,11 +164,11 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Good morning,',
           style: TextStyle(
             fontSize: 16,
-            color: textCaption,
+            color: AppColors.textTertiary,
             fontWeight: FontWeight.w400,
             letterSpacing: -0.2,
           ),
@@ -186,10 +176,10 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
         const SizedBox(height: 4),
         Text(
           name,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.w700,
-            color: textPrimary,
+            color: AppColors.textPrimary,
             letterSpacing: -0.8,
             height: 1.1,
           ),
@@ -199,7 +189,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
           'Manage your properties and tenants',
           style: TextStyle(
             fontSize: 16,
-            color: textCaption,
+            color: AppColors.textTertiary,
             fontWeight: FontWeight.w400,
             letterSpacing: -0.2,
           ),
@@ -211,25 +201,105 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            AppColors.surfaceCards,
+            AppColors.luxuryGradientStart,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.borderLight,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowColor,
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.9),
+            blurRadius: 1,
+            offset: const Offset(0, 1),
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: TextField(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          // TODO: Navigate to search page or show search overlay
+        },
         decoration: InputDecoration(
-          hintText: 'Search properties...',
-          hintStyle: const TextStyle(
-            color: textCaption,
-            fontSize: 16,
+          hintText: 'Search properties, tenants, messages...',
+          hintStyle: TextStyle(
+            color: AppColors.textTertiary,
+            fontSize: 15,
             fontWeight: FontWeight.w400,
+            letterSpacing: -0.1,
           ),
-          prefixIcon: const Icon(Icons.search_outlined, color: textCaption, size: 20),
+          prefixIcon: Container(
+            padding: const EdgeInsets.all(8),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primaryAccent.withValues(alpha: 0.15),
+                    AppColors.primaryAccent.withValues(alpha: 0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.search_outlined, 
+                color: AppColors.primaryAccent, 
+                size: 18,
+              ),
+            ),
+          ),
+          suffixIcon: GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              // TODO: Show filter options
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.textTertiary.withValues(alpha: 0.1),
+                      AppColors.textTertiary.withValues(alpha: 0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.filter_list_outlined,
+                  color: AppColors.textTertiary,
+                  size: 18,
+                ),
+              ),
+            ),
+          ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         ),
-        style: const TextStyle(
-          color: textPrimary,
-          fontSize: 16,
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 15,
           fontWeight: FontWeight.w500,
+          letterSpacing: -0.1,
         ),
       ),
     );
@@ -244,130 +314,346 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
         .where((p) => p.status == 'rented')
         .fold(0.0, (sum, p) => sum + (p.outstandingPayments));
 
-    return Row(
-      children: [
-        Expanded(
-          child: _buildFinancialCard(
-            'Monthly Revenue',
-            'CHF ${totalRevenue.toStringAsFixed(0)}',
-            Icons.trending_up_outlined,
-            success,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildFinancialCard(
-            'Outstanding',
-            'CHF ${outstanding.toStringAsFixed(0)}',
-            Icons.warning_outlined,
-            warning,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFinancialCard(String title, String amount, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(20.0),
+      padding: const EdgeInsets.all(28.0),
       decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.surfaceCards,
+            AppColors.accentLight.withValues(alpha: 0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppColors.borderLight,
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: AppColors.shadowColorMedium,
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.9),
+            blurRadius: 1,
+            offset: const Offset(0, 1),
+            spreadRadius: 0,
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 24, color: color),
-          const SizedBox(height: 12),
-          Text(
-            amount,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: textPrimary,
-              letterSpacing: -0.4,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.luxuryGold.withValues(alpha: 0.2),
+                      AppColors.luxuryGold.withValues(alpha: 0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.luxuryGold.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  Icons.account_balance_wallet_outlined,
+                  color: AppColors.luxuryGold,
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 18),
+              Text(
+                'Financial Overview',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            title.toUpperCase(),
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: textCaption,
-              letterSpacing: 0.5,
-            ),
+          const SizedBox(height: 28),
+          Row(
+            children: [
+              Expanded(
+                child: _buildFinancialCard(
+                  'Monthly Revenue',
+                  'CHF ${totalRevenue.toStringAsFixed(0)}',
+                  Icons.trending_up_outlined,
+                  AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildFinancialCard(
+                  'Outstanding',
+                  'CHF ${outstanding.toStringAsFixed(0)}',
+                  Icons.warning_outlined,
+                  AppColors.warning,
+                ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFinancialCard(String title, String amount, IconData icon, Color color) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        // TODO: Navigate to detailed financial view
+      },
+      child: Container(
+        padding: const EdgeInsets.all(24.0),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.surfaceCards,
+              color.withValues(alpha: 0.03),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: color.withValues(alpha: 0.15),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadowColor,
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+              spreadRadius: 0,
+            ),
+            BoxShadow(
+              color: Colors.white.withValues(alpha: 0.9),
+              blurRadius: 1,
+              offset: const Offset(0, 1),
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        color.withValues(alpha: 0.2),
+                        color.withValues(alpha: 0.1),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: color.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Icon(icon, size: 22, color: color),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 14,
+                  color: AppColors.textTertiary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Text(
+              amount,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+                letterSpacing: -0.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title.toUpperCase(),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textTertiary,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildQuickAccess() {
     return Container(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(28.0),
       decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.surfaceCards,
+            AppColors.luxuryGradientStart,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppColors.borderLight,
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: AppColors.shadowColorMedium,
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.9),
+            blurRadius: 1,
+            offset: const Offset(0, 1),
+            spreadRadius: 0,
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Quick Actions',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-              letterSpacing: -0.3,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primaryAccent.withValues(alpha: 0.2),
+                      AppColors.primaryAccent.withValues(alpha: 0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.primaryAccent.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  Icons.flash_on_outlined,
+                  color: AppColors.primaryAccent,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 18),
+              Text(
+                'Quick Actions',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 28),
           Row(
             children: [
               Expanded(
                 child: _buildQuickAccessButton(
                   'Add Property',
                   Icons.add_home_outlined,
+                  AppColors.primaryAccent,
                   () {
                     HapticFeedback.mediumImpact();
                     context.push('/add-property');
                   },
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: _buildQuickAccessButton(
                   'Messages',
                   Icons.chat_bubble_outline,
+                  AppColors.success,
                   () {
                     HapticFeedback.mediumImpact();
                     context.push('/conversations');
                   },
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: _buildQuickAccessButton(
                   'Reports',
                   Icons.analytics_outlined,
+                  AppColors.warning,
                   () {
                     HapticFeedback.mediumImpact();
                     context.push('/reports');
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickAccessButton(
+                  'Maintenance',
+                  Icons.build_circle_outlined,
+                  AppColors.error,
+                  () {
+                    HapticFeedback.mediumImpact();
+                    context.push('/maintenance/manage');
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildQuickAccessButton(
+                  'Tenants',
+                  Icons.people_outline,
+                  AppColors.luxuryGold,
+                  () {
+                    HapticFeedback.mediumImpact();
+                    context.push('/tenants');
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildQuickAccessButton(
+                  'Settings',
+                  Icons.settings_outlined,
+                  AppColors.textSecondary,
+                  () {
+                    HapticFeedback.mediumImpact();
+                    context.push('/settings');
                   },
                 ),
               ),
@@ -378,28 +664,63 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
     );
   }
 
-  Widget _buildQuickAccessButton(String label, IconData icon, VoidCallback onPressed) {
+  Widget _buildQuickAccessButton(String label, IconData icon, Color iconColor, VoidCallback onPressed) {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        padding: const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(8),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              iconColor.withValues(alpha: 0.08),
+              iconColor.withValues(alpha: 0.02),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: iconColor.withValues(alpha: 0.15),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: iconColor.withValues(alpha: 0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           children: [
-            Icon(icon, size: 24, color: accent),
-            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: iconColor.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                icon, 
+                size: 26, 
+                color: iconColor,
+              ),
+            ),
+            const SizedBox(height: 14),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: textSecondary,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
                 letterSpacing: -0.1,
               ),
               textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -409,15 +730,33 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
 
   Widget _buildPropertyOverview(List<Property> properties) {
     return Container(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(28.0),
       decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.surfaceCards,
+            AppColors.accentLight.withValues(alpha: 0.2),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppColors.borderLight,
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: AppColors.shadowColorMedium,
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.9),
+            blurRadius: 1,
+            offset: const Offset(0, 1),
+            spreadRadius: 0,
           ),
         ],
       ),
@@ -427,28 +766,65 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Your Properties',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
-                  letterSpacing: -0.3,
-                ),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.primaryAccent.withValues(alpha: 0.2),
+                          AppColors.primaryAccent.withValues(alpha: 0.1),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: AppColors.primaryAccent.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.home_work_outlined,
+                      color: AppColors.primaryAccent,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 18),
+                  Text(
+                    'Properties',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                '${properties.length} Properties',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: textCaption,
-                  fontWeight: FontWeight.w500,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryAccent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.primaryAccent.withValues(alpha: 0.2)),
+                ),
+                child: Text(
+                  '${properties.length} Total',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryAccent,
+                    letterSpacing: -0.1,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 28),
           ...properties.take(3).map((property) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: 16),
             child: _buildPropertyCard(property),
           )),
           if (properties.length > 3)
@@ -458,17 +834,39 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
                 context.push('/properties');
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: const Center(
-                  child: Text(
-                    'View All Properties',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: accent,
-                      letterSpacing: -0.1,
-                    ),
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.primaryAccent.withValues(alpha: 0.2)),
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      AppColors.primaryAccent.withValues(alpha: 0.05),
+                      AppColors.primaryAccent.withValues(alpha: 0.02),
+                    ],
                   ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'View All Properties',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primaryAccent,
+                        letterSpacing: -0.1,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 14,
+                      color: AppColors.primaryAccent,
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -478,8 +876,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
   }
 
   Widget _buildPropertyCard(Property property) {
-    final statusColor = property.status == 'rented' ? success : 
-                      property.status == 'available' ? accent : warning;
+    final statusColor = property.status == 'rented' ? AppColors.success : 
+                      property.status == 'available' ? AppColors.primaryAccent : AppColors.warning;
 
     return GestureDetector(
       onTap: () {
@@ -487,71 +885,106 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
         context.push('/property/${property.id}');
       },
       child: Container(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(8),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.surfaceCards,
+              statusColor.withValues(alpha: 0.02),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: statusColor.withValues(alpha: 0.15),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: statusColor.withValues(alpha: 0.08),
+              blurRadius: 12,
+              spreadRadius: 0,
+            ),
+          ],
         ),
         child: Row(
           children: [
             Container(
-              width: 50,
-              height: 50,
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  'https://picsum.photos/200/100?random=${property.id}',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      const Icon(Icons.home_outlined, color: textCaption),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    statusColor.withValues(alpha: 0.2),
+                    statusColor.withValues(alpha: 0.1),
+                  ],
                 ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: statusColor.withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                Icons.home_outlined,
+                color: statusColor,
+                size: 24,
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${property.address.street}, ${property.address.city}',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                      letterSpacing: -0.1,
+                children: [                  Text(
+                    property.address.street,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.2,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    'CHF ${property.rentAmount.toStringAsFixed(0)}/month',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: textSecondary,
-                    ),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.attach_money,
+                        size: 16,
+                        color: AppColors.success,
+                      ),
+                      Text(
+                        'CHF ${property.rentAmount.toStringAsFixed(0)}/month',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.success,
+                          letterSpacing: -0.1,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: statusColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
+                color: statusColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: statusColor.withValues(alpha: 0.2),
+                  width: 1,
+                ),
               ),
               child: Text(
                 property.status.toUpperCase(),
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: statusColor,
-                  letterSpacing: 0.2,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
@@ -563,61 +996,132 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
 
   Widget _buildRecentMessages() {
     return Container(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(28.0),
       decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.surfaceCards,
+            AppColors.luxuryGradientStart,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppColors.borderLight,
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: AppColors.shadowColorMedium,
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.9),
+            blurRadius: 1,
+            offset: const Offset(0, 1),
+            spreadRadius: 0,
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Recent Messages',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-              letterSpacing: -0.3,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.success.withValues(alpha: 0.2),
+                      AppColors.success.withValues(alpha: 0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.success.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  Icons.chat_bubble_outline,
+                  color: AppColors.success,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 18),
+              Text(
+                'Recent Messages',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
-          _buildMessageItem('John Doe', 'Maintenance request for Unit 301', '2h ago'),
-          _buildMessageItem('Jane Smith', 'Rent payment confirmation', '5h ago'),
-          _buildMessageItem('Mike Johnson', 'Question about lease renewal', '1d ago'),
+          const SizedBox(height: 24),
+          _buildMessageItem('John Doe', 'Maintenance request for Unit 301', '2h ago', Icons.build_outlined, AppColors.warning),
+          const SizedBox(height: 16),
+          _buildMessageItem('Jane Smith', 'Rent payment confirmation', '5h ago', Icons.payment, AppColors.success),
+          const SizedBox(height: 16),
+          _buildMessageItem('Mike Johnson', 'Question about lease renewal', '1d ago', Icons.help_outline, AppColors.primaryAccent),
         ],
       ),
     );
   }
 
-  Widget _buildMessageItem(String sender, String message, String time) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+  Widget _buildMessageItem(String sender, String message, String time, IconData icon, Color iconColor) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.surfaceCards,
+            iconColor.withValues(alpha: 0.02),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: iconColor.withValues(alpha: 0.1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowColor,
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: accent.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Center(
-              child: Text(
-                sender[0],
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: accent,
-                ),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  iconColor.withValues(alpha: 0.2),
+                  iconColor.withValues(alpha: 0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: iconColor.withValues(alpha: 0.2),
+                width: 1,
               ),
             ),
+            child: Icon(icon, color: iconColor, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -626,22 +1130,22 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
               children: [
                 Text(
                   sender,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                    letterSpacing: -0.1,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.2,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
                   message,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: textCaption,
-                    fontWeight: FontWeight.w400,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                    letterSpacing: -0.1,
                   ),
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -649,10 +1153,10 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
           ),
           Text(
             time,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: textCaption,
-              fontWeight: FontWeight.w400,
+              color: AppColors.textTertiary,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
@@ -662,103 +1166,190 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
 
   Widget _buildMaintenanceRequests() {
     return Container(
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.all(28.0),
       decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.surfaceCards,
+            AppColors.warningLight.withValues(alpha: 0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppColors.borderLight,
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: AppColors.shadowColorMedium,
+            blurRadius: 24,
+            offset: const Offset(0, 12),
+            spreadRadius: 0,
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.9),
+            blurRadius: 1,
+            offset: const Offset(0, 1),
+            spreadRadius: 0,
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Maintenance Requests',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-              letterSpacing: -0.3,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.warning.withValues(alpha: 0.2),
+                      AppColors.warning.withValues(alpha: 0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.warning.withValues(alpha: 0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  Icons.build_circle_outlined,
+                  color: AppColors.warning,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 18),
+              Text(
+                'Maintenance Requests',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
-          _buildMaintenanceCard('Heating System', 'Apartment 4A', 'High Priority', error),
-          _buildMaintenanceCard('Plumbing Issue', 'Unit 2B', 'Medium Priority', warning),
-          _buildMaintenanceCard('Paint Touch-up', 'Studio 1C', 'Low Priority', textCaption),
+          const SizedBox(height: 24),
+          _buildMaintenanceCard('Heating System', 'Apartment 4A', 'High Priority', AppColors.error, Icons.thermostat_outlined),
+          const SizedBox(height: 16),
+          _buildMaintenanceCard('Plumbing Issue', 'Unit 2B', 'Medium Priority', AppColors.warning, Icons.plumbing_outlined),
+          const SizedBox(height: 16),
+          _buildMaintenanceCard('Light Fixture', 'Unit 1C', 'Low Priority', AppColors.success, Icons.lightbulb_outlined),
         ],
       ),
     );
   }
 
-  Widget _buildMaintenanceCard(String issue, String location, String priority, Color priorityColor) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: priorityColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(Icons.build_outlined, size: 20, color: priorityColor),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    issue,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                      letterSpacing: -0.1,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    location,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: textCaption,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: priorityColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                priority,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: priorityColor,
-                  letterSpacing: 0.2,
-                ),
-              ),
-            ),
+  Widget _buildMaintenanceCard(String issue, String location, String priority, Color priorityColor, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.surfaceCards,
+            priorityColor.withValues(alpha: 0.02),
           ],
         ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: priorityColor.withValues(alpha: 0.15),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowColor,
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  priorityColor.withValues(alpha: 0.2),
+                  priorityColor.withValues(alpha: 0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: priorityColor.withValues(alpha: 0.2),
+                width: 1,
+              ),
+            ),
+            child: Icon(icon, color: priorityColor, size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  issue,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.location_on_outlined,
+                      size: 14,
+                      color: AppColors.textTertiary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      location,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textTertiary,
+                        letterSpacing: -0.1,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: priorityColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: priorityColor.withValues(alpha: 0.2),
+                width: 1,
+              ),
+            ),
+            child: Text(
+              priority.toUpperCase(),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: priorityColor,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -766,93 +1357,134 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
   Widget _buildBottomNav() {
     return Container(
       decoration: BoxDecoration(
-        color: background,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.primaryBackground,
+            AppColors.luxuryGradientStart,
+          ],
+        ),
+        border: Border(
+          top: BorderSide(
+            color: AppColors.borderLight,
+            width: 1,
+          ),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+            color: AppColors.shadowColorMedium,
+            blurRadius: 16,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(Icons.home_outlined, Icons.home, 'Home', 0),
-              _buildNavItem(Icons.chat_bubble_outline, Icons.chat_bubble, 'Messages', 1),
-              _buildNavItem(Icons.build_outlined, Icons.build, 'Maintenance', 2),
-              _buildNavItem(Icons.payment_outlined, Icons.payment, 'Payments', 3),
-              _buildNavItem(Icons.person_outline, Icons.person, 'Profile', 4),
-            ],
-          ),
-        ),
+      child: BottomNavigationBar(
+        currentIndex: _selectedIndex,        onTap: (index) {
+          HapticFeedback.lightImpact();
+          setState(() {
+            _selectedIndex = index;
+          });
+          
+          // Navigate to the appropriate pages
+          switch (index) {
+            case 0: // Dashboard - already here
+              break;
+            case 1: // Properties
+              context.push('/properties');
+              break;
+            case 2: // Messages
+              context.push('/conversations');
+              break;
+            case 3: // Reports
+              context.push('/reports');
+              break;
+            case 4: // Profile
+              context.push('/settings');
+              break;
+          }
+        },
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        selectedItemColor: AppColors.primaryAccent,
+        unselectedItemColor: AppColors.textTertiary,
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
+        items: [
+          _buildBottomNavItem(Icons.dashboard_outlined, Icons.dashboard, 'Dashboard', 0),
+          _buildBottomNavItem(Icons.home_work_outlined, Icons.home_work, 'Properties', 1),
+          _buildBottomNavItem(Icons.chat_bubble_outline, Icons.chat_bubble, 'Messages', 2),
+          _buildBottomNavItem(Icons.analytics_outlined, Icons.analytics, 'Reports', 3),
+          _buildBottomNavItem(Icons.person_outline, Icons.person, 'Profile', 4),
+        ],
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, IconData activeIcon, String label, int index) {
+  BottomNavigationBarItem _buildBottomNavItem(IconData icon, IconData activeIcon, String label, int index) {
     final isSelected = _selectedIndex == index;
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        setState(() => _selectedIndex = index);
-        
-        switch (index) {
-          case 0:
-            break;
-          case 1:
-            context.push('/conversations');
-            break;
-          case 2:
-            context.push('/maintenance/manage');
-            break;
-          case 3:
-            context.push('/payments/history');
-            break;
-          case 4:
-            context.push('/settings');
-            break;
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isSelected ? activeIcon : icon,
-              color: isSelected ? accent : textCaption,
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? accent : textCaption,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                letterSpacing: -0.1,
-              ),
-            ),
-          ],
+    return BottomNavigationBarItem(
+      icon: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          gradient: isSelected ? LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primaryAccent.withValues(alpha: 0.1),
+              AppColors.primaryAccent.withValues(alpha: 0.05),
+            ],
+          ) : null,
+          borderRadius: BorderRadius.circular(12),
+          border: isSelected ? Border.all(
+            color: AppColors.primaryAccent.withValues(alpha: 0.2),
+            width: 1,
+          ) : null,
+        ),
+        child: Icon(
+          isSelected ? activeIcon : icon,
+          color: isSelected ? AppColors.primaryAccent : AppColors.textTertiary,
         ),
       ),
+      label: label,
     );
   }
 
   Widget _buildFAB() {
-    return FloatingActionButton(
-      onPressed: () {
-        HapticFeedback.mediumImpact();
-        context.push('/add-property');
-      },
-      backgroundColor: accent,
-      foregroundColor: Colors.white,
-      elevation: 4,
-      child: const Icon(Icons.add, size: 24),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primaryAccent,
+            AppColors.primaryAccent.withValues(alpha: 0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryAccent.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: FloatingActionButton(
+        onPressed: () {
+          HapticFeedback.mediumImpact();
+          context.push('/add-property');
+        },
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: Icon(
+          Icons.add,
+          color: AppColors.textOnAccent,
+          size: 28,
+        ),
+      ),
     );
   }
 }
+

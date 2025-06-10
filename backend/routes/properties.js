@@ -193,4 +193,24 @@ router.post('/', async (req, res) => {
     await client.close();
   }
 });
+
+// Get all properties
+router.get('/', async (req, res) => {
+  const client = new MongoClient(dbUri);
+  
+  try {
+    await client.connect();
+    const db = client.db(dbName);
+    
+    const properties = await db.collection('properties').find({}).toArray();
+    console.log(`Found ${properties.length} properties`);
+    res.json(properties);
+  } catch (error) {
+    console.error('Error fetching properties:', error);
+    res.status(500).json({ message: 'Error fetching properties' });
+  } finally {
+    await client.close();
+  }
+});
+
 module.exports = router;

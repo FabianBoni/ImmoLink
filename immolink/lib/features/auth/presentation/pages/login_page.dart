@@ -207,7 +207,6 @@ class _LoginPageState extends ConsumerState<LoginPage>
       ),
     );
   }
-
   Widget _buildTextField({
     required TextEditingController controller,
     required IconData icon,
@@ -217,7 +216,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
     return TextFormField(
       controller: controller,
       obscureText: isPassword && !_isPasswordVisible,
-      style: const TextStyle(color: Colors.white),
+      style: const TextStyle(color: Colors.black87),
       validator: (value) {
         if (value == null || value.isEmpty) {
           return 'This field is required';
@@ -228,12 +227,12 @@ class _LoginPageState extends ConsumerState<LoginPage>
         return null;
       },
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: Colors.white70),
+        prefixIcon: Icon(icon, color: Colors.grey.shade600),
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(
                   _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.white70,
+                  color: Colors.grey.shade600,
                 ),
                 onPressed: () {
                   setState(() {
@@ -243,14 +242,17 @@ class _LoginPageState extends ConsumerState<LoginPage>
               )
             : null,
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white70),
+        labelStyle: TextStyle(color: Colors.grey.shade600),
+        hintStyle: TextStyle(color: Colors.grey.shade500),
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.9),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white30),
+          borderSide: BorderSide(color: Colors.grey.shade300),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white),
+          borderSide: BorderSide(color: Theme.of(context).primaryColor),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

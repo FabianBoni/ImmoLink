@@ -240,7 +240,7 @@ class ReportsPage extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: color.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -706,7 +706,7 @@ class ReportsPage extends ConsumerWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.2),
+                          color: statusColor.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
@@ -733,3 +733,4 @@ class ReportsPage extends ConsumerWidget {
     );
   }
 }
+

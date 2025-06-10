@@ -1,6 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/widgets/app_top_bar.dart';
+import '../../../../core/widgets/app_search_bar.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../property/presentation/providers/property_providers.dart';
+import '../../../property/domain/models/property.dart';
+
+class CategoryTab {
+  final String label;
+  final IconData icon;
+
+  const CategoryTab({
+    required this.label,
+    required this.icon,
+  });
+}
 
 class TenantDashboard extends ConsumerStatefulWidget {
   const TenantDashboard({super.key});
@@ -11,6 +29,14 @@ class TenantDashboard extends ConsumerStatefulWidget {
 
 class _TenantDashboardState extends ConsumerState<TenantDashboard> {
   int _selectedIndex = 0;
+  int _selectedCategoryIndex = 0;
+
+  final List<CategoryTab> _categories = [
+    const CategoryTab(label: 'All', icon: Icons.home),
+    const CategoryTab(label: 'Apartments', icon: Icons.apartment),
+    const CategoryTab(label: 'Houses', icon: Icons.house),
+    const CategoryTab(label: 'Studios', icon: Icons.single_bed),
+  ];
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -20,31 +46,60 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
       return 'Good afternoon';
     }
     return 'Good evening';
-  }
-
-  @override
+  }  @override
   Widget build(BuildContext context) {
+    final currentUser = ref.watch(currentUserProvider);
+    final propertiesAsync = ref.watch(tenantPropertiesProvider);
+    
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                _buildHeader(),
-                const SizedBox(height: 30),
-                _buildSearchBar(),
-                const SizedBox(height: 30),
-                _buildPropertyCard(),
-                const SizedBox(height: 30),
-                _buildQuickActions(),
-                const SizedBox(height: 30),
-                _buildRecentActivity(),
-              ],
-            ),
+      backgroundColor: AppColors.primaryBackground,
+      appBar: AppTopBar(
+        location: 'Springfield, IL',
+        showLocation: true,
+        onLocationTap: () {
+          // Handle location tap
+        },
+        onNotificationTap: () {
+          // Handle notification tap
+        },
+      ),
+      body: propertiesAsync.when(        data: (properties) => SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: AppSpacing.sectionSeparation),
+              _buildHeader(currentUser?.fullName ?? 'Guest User'),
+              const SizedBox(height: AppSpacing.sectionSeparation),
+              _buildSearchBar(),
+              const SizedBox(height: AppSpacing.itemSeparation),
+              _buildCategoryTabs(),
+              const SizedBox(height: AppSpacing.sectionSeparation),
+              if (_getFilteredProperties(properties).isNotEmpty) 
+                _buildPropertyCard(_getFilteredProperties(properties).first)
+              else
+                _buildNoPropertyCard(),
+              const SizedBox(height: AppSpacing.sectionSeparation),
+              _buildQuickActions(),
+              const SizedBox(height: AppSpacing.sectionSeparation),
+              _buildRecentActivity(),
+              const SizedBox(height: AppSpacing.xxxl),
+            ],
+          ),
+        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, _) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: AppColors.error),
+              const SizedBox(height: 16),
+              Text('Error loading dashboard', style: AppTypography.subhead),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => ref.invalidate(tenantPropertiesProvider),
+                child: const Text('Retry'),
+              ),
+            ],
           ),
         ),
       ),
@@ -52,133 +107,247 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
     );
   }
 
-  Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _getGreeting(),
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 16,
+  Widget _buildHeader(String userName) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.horizontalPadding),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _getGreeting(),
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Guest User',  // Default value when no user is logged in
-              style: TextStyle(
-                color: Colors.grey[900],
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(12),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                userName,
+                style: AppTypography.heading1,
               ),
             ],
           ),
-          child: CircleAvatar(
-            radius: 24,
-            backgroundColor: Colors.grey[50],
-            child: Icon(Icons.person_outline, color: Colors.grey[800]),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.primaryBackground,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.shadowColor,
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              radius: 24,
+              backgroundColor: AppColors.surfaceCards,              child: const Icon(
+                Icons.person_outline,
+                color: AppColors.textSecondary,
+                size: AppSizes.iconMedium,
+              ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildSearchBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.horizontalPadding),
+      child: AppSearchBar(
+        hintText: 'Search properties, locations...',
+        onTap: () {
+          // Navigate to search page or show search functionality
+        },
+        readOnly: true,
       ),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: 'Search activities...',
-          hintStyle: TextStyle(color: Colors.grey[400]),
-          border: InputBorder.none,
-          icon: Icon(Icons.search, color: Colors.grey[400]),
+    );
+  }
+  Widget _buildCategoryTabs() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.horizontalPadding),
+      child: Container(
+        height: 48,
+        decoration: BoxDecoration(
+          color: AppColors.surfaceCards,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadowColor,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: _categories.asMap().entries.map((entry) {
+            final index = entry.key;
+            final category = entry.value;
+            final isSelected = _selectedCategoryIndex == index;
+            
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedCategoryIndex = index;
+                  });
+                },
+                child: Container(
+                  margin: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.primaryAccent : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          category.icon,
+                          size: 16,
+                          color: isSelected ? Colors.white : AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          category.label,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isSelected ? Colors.white : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+  Widget _buildPropertyCard(Property property) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.horizontalPadding),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.primaryBackground,
+          borderRadius: BorderRadius.circular(12.0), // cardsButtons radius
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadowColor,
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12.0), // cardsButtons radius
+              ),
+              child: Container(
+                height: 120.0, // propertyCardImageHeight
+                width: double.infinity,
+                color: AppColors.surfaceCards,
+                child: const Icon(
+                  Icons.home,
+                  color: AppColors.textPlaceholder,
+                  size: 32.0, // iconLarge
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    property.address.street,
+                    style: AppTypography.subhead,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [                      const Icon(
+                        Icons.location_on_outlined,
+                        size: 16.0, // iconSmall
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(
+                        '${property.address.city}, ${property.address.postalCode}',
+                        style: AppTypography.body.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  _buildPropertyStatus(property),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildPropertyCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.network(
-              'https://picsum.photos/400/200',
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
+  Widget _buildNoPropertyCard() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.horizontalPadding),
+      child: Container(        decoration: BoxDecoration(
+          color: AppColors.primaryBackground,
+          borderRadius: BorderRadius.circular(12.0), // cardsButtons
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadowColor,
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Sunset Apartments',
-                  style: TextStyle(
-                    color: Colors.grey[900],
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            children: [
+              Icon(
+                Icons.home_outlined,
+                size: 64,
+                color: AppColors.textPlaceholder,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'No Property Assigned',
+                style: AppTypography.subhead,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                'You haven\'t been assigned to any property yet. Contact your landlord for more information.',
+                style: AppTypography.body.copyWith(
+                  color: AppColors.textSecondary,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  '123 Main Street, Springfield',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildPropertyStatus(),
-              ],
-            ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildPropertyStatus() {
+  Widget _buildPropertyStatus(Property property) {
     return Row(
       children: [
-        _buildStatusItem('Rent Status', 'Paid', Colors.green),
-        const SizedBox(width: 16),
-        _buildStatusItem('Next Due', '12/12/2023', Colors.orange),
+        _buildStatusItem('Rent Status', 'Paid', AppColors.success),
+        const SizedBox(width: AppSpacing.lg),
+        _buildStatusItem('Rent Amount', 'CHF ${property.rentAmount.toStringAsFixed(0)}', AppColors.primaryAccent),
       ],
     );
   }
@@ -186,28 +355,22 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
   Widget _buildStatusItem(String label, String value, Color color) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: color.withAlpha(12),
-          borderRadius: BorderRadius.circular(8),
+        padding: const EdgeInsets.all(AppSpacing.md),        decoration: BoxDecoration(
+          color: color == AppColors.success ? AppColors.successLight : AppColors.accentLight,
+          borderRadius: BorderRadius.circular(12.0),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
-              ),
+              style: AppTypography.caption,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               value,
-              style: TextStyle(
+              style: AppTypography.subhead.copyWith(
                 color: color,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
               ),
             ),
           ],
@@ -217,41 +380,37 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
   }
 
   Widget _buildQuickActions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Quick Actions',
-          style: TextStyle(
-            color: Colors.grey[900],
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.horizontalPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Quick Actions',
+            style: AppTypography.heading2,
           ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            _buildActionButton('Pay Rent', Icons.payment, Colors.green),
-            const SizedBox(width: 12),
-            _buildActionButton(
-                'Report Issue', Icons.warning_rounded, Colors.orange),
-            const SizedBox(width: 12),
-            _buildActionButton(
-              'Message Landlord',
-              Icons.message,
-              Colors.blue,
-            ),
-          ],
-        ),
-      ],
+          const SizedBox(height: AppSpacing.itemSeparation),
+          Row(
+            children: [
+              _buildActionButton('Pay Rent', Icons.payment, AppColors.success),
+              const SizedBox(width: AppSpacing.md),
+              _buildActionButton('Report Issue', Icons.warning_rounded, AppColors.warning),
+              const SizedBox(width: AppSpacing.md),
+              _buildActionButton('Message Landlord', Icons.message, AppColors.primaryAccent, () {
+                // Navigate to conversations list or create new chat
+                context.push('/conversations');
+              }),
+            ],
+          ),
+        ],
+      ),
     );
   }
-
-  Widget _buildActionButton(String label, IconData icon, Color color) {
+  Widget _buildActionButton(String label, IconData icon, Color color, [VoidCallback? onTap]) {
     return Expanded(
       child: GestureDetector(
-        onTap: () {
-          // Navigate based on the action button
+        onTap: onTap ?? () {
+          // Default navigation based on the action button
           if (label == 'Pay Rent') {
             context.push('/payments/make');
           } else if (label == 'Report Issue') {
@@ -261,28 +420,33 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
           }
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),          decoration: BoxDecoration(
+            color: AppColors.primaryBackground,
+            borderRadius: BorderRadius.circular(12.0), // cardsButtons
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withAlpha(8),
+                color: AppColors.shadowColor,
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color, size: 24),
-              const SizedBox(height: 8),
+              Icon(
+                icon,
+                color: color,
+                size: 24.0, // iconMedium
+              ),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 label,
-                style: TextStyle(
-                  color: Colors.grey[800],
-                  fontSize: 14,
+                style: AppTypography.caption.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
@@ -292,53 +456,53 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
   }
 
   Widget _buildRecentActivity() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Recent Activity',
-          style: TextStyle(
-            color: Colors.grey[900],
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.horizontalPadding),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Recent Activity',
+            style: AppTypography.heading2,
           ),
-        ),
-        const SizedBox(height: 16),
-        _buildActivityItem(
-          'Rent Payment',
-          'Payment processed successfully',
-          Icons.payment,
-          Colors.green,
-          '2h ago',
-        ),
-        const SizedBox(height: 12),
-        _buildActivityItem(
-          'Maintenance Request',
-          'Water leak reported in kitchen',
-          Icons.build,
-          Colors.orange,
-          '1d ago',
-        ),
-      ],
+          const SizedBox(height: AppSpacing.itemSeparation),
+          _buildActivityItem(
+            'Rent Payment',
+            'Payment processed successfully',
+            Icons.payment,
+            AppColors.success,
+            '2h ago',
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _buildActivityItem(
+            'Maintenance Request',
+            'Submitted request for kitchen faucet',
+            Icons.build,
+            AppColors.warning,
+            '1d ago',
+          ),
+          const SizedBox(height: AppSpacing.md),
+          _buildActivityItem(
+            'Message from Landlord',
+            'New message about property inspection',
+            Icons.message,
+            AppColors.primaryAccent,
+            '3d ago',
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildActivityItem(
-    String title,
-    String description,
-    IconData icon,
-    Color color,
-    String time,
-  ) {
+  Widget _buildActivityItem(String title, String description, IconData icon, Color color, String time) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+      padding: const EdgeInsets.all(AppSpacing.md),      decoration: BoxDecoration(
+        color: AppColors.primaryBackground,
+        borderRadius: BorderRadius.circular(12.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 8,
+            color: AppColors.shadowColor,
+            blurRadius: 4,
             offset: const Offset(0, 2),
           ),
         ],
@@ -346,41 +510,39 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
-              color: color.withAlpha(12),
-              shape: BoxShape.circle,
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12.0),
             ),
-            child: Icon(icon, color: color),
+            child: Icon(
+              icon,
+              color: color,
+              size: 16.0,
+            ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    color: Colors.grey[900],
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                  style: AppTypography.body.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
                   description,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
+                  style: AppTypography.caption,
                 ),
               ],
             ),
           ),
           Text(
             time,
-            style: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 12,
+            style: AppTypography.caption.copyWith(
+              color: AppColors.textSecondary,
             ),
           ),
         ],
@@ -390,73 +552,133 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
 
   Widget _buildBottomNav() {
     return Container(
-      height: 80,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.primaryBackground,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(8),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
+            color: AppColors.shadowColor,
+            blurRadius: 12,
+            offset: const Offset(0, -4),
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home, 'Home', 0, context),
-          _buildNavItem(Icons.message, 'Messages', 1, context),
-          _buildNavItem(Icons.build, 'Maintenance', 2, context),
-          _buildNavItem(Icons.payment, 'Payments', 3, context),
-          _buildNavItem(Icons.person, 'Profile', 4, context),
+      child: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+          
+          // Handle navigation
+          switch (index) {
+            case 0: // Home - already here
+              break;
+            case 1: // Search
+              context.push('/search');
+              break;
+            case 2: // Messages
+              context.push('/conversations');
+              break;
+            case 3: // Payments
+              context.push('/payments/history');
+              break;
+            case 4: // Profile/Settings
+              context.push('/settings');
+              break;
+          }
+        },
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        selectedItemColor: AppColors.primaryAccent,
+        unselectedItemColor: AppColors.textPlaceholder,
+        items: [
+          _buildBottomNavItem(Icons.home, 'Home', 0),
+          _buildBottomNavItem(Icons.search, 'Search', 1),
+          _buildBottomNavItem(Icons.message, 'Messages', 2),
+          _buildBottomNavItem(Icons.payment, 'Payments', 3),
+          _buildBottomNavItem(Icons.person, 'Profile', 4),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, int index, BuildContext context) {
+  BottomNavigationBarItem _buildBottomNavItem(IconData icon, String label, int index) {
     final isSelected = _selectedIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() => _selectedIndex = index);
-        
-        // Navigate to the appropriate page based on the selected index
-        switch (index) {
-          case 0: // Home
-            // Already on home page
-            break;
-          case 1: // Messages
-            context.push('/conversations');
-            break;
-          case 2: // Maintenance
-            context.push('/maintenance/request');
-            break;
-          case 3: // Payments
-            context.push('/payments/history');
-            break;
-          case 4: // Profile/Settings
-            context.push('/settings');
-            break;
-        }
-      },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? Theme.of(context).primaryColor : Colors.grey[400],
-            size: 28,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? Theme.of(context).primaryColor : Colors.grey[400],
-              fontSize: 12,
+    return BottomNavigationBarItem(
+      icon: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedIndex = index;
+          });
+          
+          // Handle navigation
+          switch (index) {
+            case 0: // Home - already here
+              break;
+            case 1: // Search
+              context.push('/search');
+              break;
+            case 2: // Messages
+              context.push('/conversations');
+              break;
+            case 3: // Payments
+              context.push('/payments/history');
+              break;
+            case 4: // Profile/Settings
+              context.push('/settings');
+              break;
+          }
+        },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [            Icon(
+              icon,
+              color: isSelected ? AppColors.primaryAccent : AppColors.textPlaceholder,
+              size: 24.0, // iconMedium
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              label,
+              style: AppTypography.caption.copyWith(
+                color: isSelected ? AppColors.primaryAccent : AppColors.textPlaceholder,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
       ),
+      label: '',
     );
+  }
+
+  List<Property> _getFilteredProperties(List<Property> properties) {
+    // Filter properties based on selected category
+    switch (_selectedCategoryIndex) {
+      case 0: // All
+        return properties;
+      case 1: // Apartments
+        return properties.where((p) => 
+          p.details.amenities.any((amenity) => 
+            amenity.toLowerCase().contains('apartment') ||
+            p.details.rooms >= 2
+          )
+        ).toList();
+      case 2: // Houses
+        return properties.where((p) => 
+          p.details.amenities.any((amenity) => 
+            amenity.toLowerCase().contains('house') ||
+            amenity.toLowerCase().contains('garden') ||
+            p.details.rooms >= 4
+          )
+        ).toList();
+      case 3: // Studios
+        return properties.where((p) => 
+          p.details.rooms <= 2 &&
+          p.details.size <= 50
+        ).toList();
+      default:
+        return properties;
+    }
   }
 }

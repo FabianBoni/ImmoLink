@@ -203,7 +203,6 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
       },
     );
   }
-
   Widget _buildTextField({
     required TextEditingController controller,
     required IconData icon,
@@ -213,23 +212,25 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
     return TextField(
       controller: controller,
       obscureText: isPassword,
-      style: const TextStyle(color: Colors.white),
+      style: const TextStyle(color: Colors.black87),
       decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: Colors.white70),
+        prefixIcon: Icon(icon, color: Colors.grey.shade600),
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white70),
+        labelStyle: TextStyle(color: Colors.grey.shade600),
+        hintStyle: TextStyle(color: Colors.grey.shade500),
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.9),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white30),
+          borderSide: BorderSide(color: Colors.grey.shade300),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white),
+          borderSide: BorderSide(color: Theme.of(context).primaryColor),
         ),
       ),
     );
   }
-
   Widget _buildDatePicker() {
     return InkWell(
       onTap: () async {
@@ -246,32 +247,32 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.white30),
+          color: Colors.white.withValues(alpha: 0.9),
+          border: Border.all(color: Colors.grey.shade300),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
-            const Icon(Icons.calendar_today, color: Colors.white70),
+            Icon(Icons.calendar_today, color: Colors.grey.shade600),
             const SizedBox(width: 12),
             Text(
               _selectedDate != null 
                 ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
                 : 'Birth Date',
-              style: const TextStyle(color: Colors.white70),
+              style: TextStyle(color: _selectedDate != null ? Colors.black87 : Colors.grey.shade600),
             ),
           ],
         ),
       ),
     );
   }
-
   Widget _buildRoleSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'I am a:',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: Colors.grey.shade600),
         ),
         const SizedBox(height: 8),
         Row(
@@ -293,17 +294,18 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
+            color: isSelected ? Colors.white.withValues(alpha: 0.9) : Colors.white.withValues(alpha: 0.7),
             border: Border.all(
-              color: isSelected ? Colors.white : Colors.white30,
+              color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade300,
+              width: 2,
             ),
             borderRadius: BorderRadius.circular(12),
-            color: isSelected ? Colors.white.withAlpha(26) : null,
           ),
           child: Center(
             child: Text(
               label,
               style: TextStyle(
-                color: isSelected ? Colors.white : Colors.white70,
+                color: isSelected ? Theme.of(context).primaryColor : Colors.grey.shade700,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),

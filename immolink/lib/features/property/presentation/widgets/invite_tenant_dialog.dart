@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/property_providers.dart';
 import '../../../auth/domain/models/user.dart';
+import '../../../chat/presentation/providers/invitation_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class InviteTenantDialog extends ConsumerStatefulWidget {
   final String propertyId;
@@ -95,13 +98,42 @@ class _InviteTenantDialogState extends ConsumerState<InviteTenantDialog> {
         );
       },
     );
-  }
+  }  void _inviteTenant(User tenant) async {
+    final currentUser = ref.read(currentUserProvider);
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User not authenticated')),
+      );
+      return;
+    }
 
-  void _inviteTenant(User tenant) {
-    print('Inviting tenant with ID: ${tenant.id}');
-    ref
-        .read(tenantInvitationProvider.notifier)
-        .inviteTenant(widget.propertyId, tenant.id);
-    Navigator.pop(context);
+    try {
+      await ref.read(invitationNotifierProvider.notifier).sendInvitation(
+        propertyId: widget.propertyId,
+        landlordId: currentUser.id,
+        tenantId: tenant.id,
+        message: 'Hello! I would like to invite you to rent my property. Please let me know if you are interested.',
+      );
+      
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Invitation sent to ${tenant.fullName}'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send invitation: $error'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }
+

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:immolink/features/maintenance/domain/models/maintenance_request.dart';
 import 'package:immolink/features/maintenance/presentation/providers/maintenance_providers.dart';
 import 'package:intl/intl.dart';
@@ -230,7 +229,7 @@ class MaintenanceManagementPage extends ConsumerWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.2),
+                      color: statusColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
@@ -279,7 +278,7 @@ class MaintenanceManagementPage extends ConsumerWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: priorityColor.withOpacity(0.2),
+                      color: priorityColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
@@ -451,3 +450,4 @@ class MaintenanceManagementPage extends ConsumerWidget {
     );
   }
 }
+

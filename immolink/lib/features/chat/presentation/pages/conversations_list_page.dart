@@ -1,39 +1,251 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/conversations_provider.dart';
 import '../../domain/models/conversation.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../core/theme/app_colors.dart';
 
-class ConversationsListPage extends ConsumerWidget {
+class ConversationsListPage extends ConsumerStatefulWidget {
   const ConversationsListPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ConversationsListPage> createState() => _ConversationsListPageState();
+}
+
+class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider);
     final conversationsAsync = ref.watch(conversationsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Messages')),
-      body: conversationsAsync.when(
-        data: (conversations) => ListView.builder(
-          itemCount: conversations.length,
-          itemBuilder: (context, index) {
-            final conversation = conversations[index];
-            final isLandlord = currentUser?.role == 'landlord';
-            final otherUserId = isLandlord 
-                ? conversation.tenantId 
-                : conversation.landlordId;
-            
-            return _buildConversationTile(
-              context,
-              conversation,
-              otherUserId,
-            );
-          },
+      backgroundColor: AppColors.primaryBackground,
+      appBar: AppBar(
+        backgroundColor: AppColors.primaryBackground,
+        elevation: 0,
+        title: Text(
+          'Messages',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Error: $error')),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
+          onPressed: () => context.pop(),
+        ),        actions: [
+          IconButton(
+            icon: Icon(Icons.contacts_outlined, color: AppColors.primaryAccent),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              context.push('/address-book');
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.add_comment_outlined, color: AppColors.primaryAccent),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              _showNewConversationDialog();
+            },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          _buildSearchBar(),
+          Expanded(
+            child: conversationsAsync.when(
+              data: (conversations) {
+                final filteredConversations = _filterConversations(conversations);
+                if (filteredConversations.isEmpty) {
+                  return _buildEmptyState();
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: filteredConversations.length,
+                  itemBuilder: (context, index) {
+                    final conversation = filteredConversations[index];
+                    final isLandlord = currentUser?.role == 'landlord';
+                    final otherUserId = isLandlord 
+                        ? conversation.tenantId 
+                        : conversation.landlordId;
+                    
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildConversationTile(
+                        context,
+                        conversation,
+                        otherUserId,
+                      ),
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, _) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                    const SizedBox(height: 16),
+                    Text('Error loading conversations: $error'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => ref.invalidate(conversationsProvider),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      margin: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            AppColors.surfaceCards,
+            AppColors.luxuryGradientStart,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.borderLight,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowColor,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+        },
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          hintText: 'Search conversations...',
+          hintStyle: TextStyle(
+            color: AppColors.textTertiary,
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+          ),
+          prefixIcon: Container(
+            padding: const EdgeInsets.all(12),
+            child: Icon(
+              Icons.search_outlined,
+              color: AppColors.primaryAccent,
+              size: 20,
+            ),
+          ),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: Icon(
+                    Icons.clear,
+                    color: AppColors.textTertiary,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+      ),
+    );
+  }
+
+  List<Conversation> _filterConversations(List<Conversation> conversations) {
+    if (_searchQuery.isEmpty) {
+      return conversations;
+    }
+    
+    return conversations.where((conversation) {
+      final searchLower = _searchQuery.toLowerCase();
+      return conversation.propertyAddress.toLowerCase().contains(searchLower) ||
+             conversation.lastMessage.toLowerCase().contains(searchLower);
+    }).toList();
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primaryAccent.withValues(alpha: 0.1),
+                  AppColors.primaryAccent.withValues(alpha: 0.05),
+                ],
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.chat_bubble_outline,
+              size: 48,
+              color: AppColors.primaryAccent,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            _searchQuery.isNotEmpty ? 'No conversations found' : 'No conversations yet',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _searchQuery.isNotEmpty 
+                ? 'Try adjusting your search terms'
+                : 'Start a conversation with your properties',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -43,24 +255,206 @@ class ConversationsListPage extends ConsumerWidget {
     Conversation conversation,
     String otherUserId,
   ) {
-    return ListTile(
-      leading: CircleAvatar(
-        child: Icon(Icons.person),
-      ),
-      title: Text('Property: ${conversation.propertyAddress}'),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(conversation.lastMessage),
-          Text(
-            conversation.lastMessageTime.toString(),
-            style: TextStyle(fontSize: 12, color: Colors.grey),
+    final isLandlord = ref.watch(currentUserProvider)?.role == 'landlord';
+    final otherUserName = isLandlord 
+        ? conversation.tenantName 
+        : conversation.landlordName;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.surfaceCards,
+            AppColors.luxuryGradientStart.withValues(alpha: 0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.borderLight,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowColor,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      onTap: () => context.push(
-        '/chat/${conversation.id}?otherUserId=$otherUserId',
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        leading: Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primaryAccent,
+                AppColors.primaryAccent.withValues(alpha: 0.7),
+              ],
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryAccent.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(
+            Icons.person,
+            color: Colors.white,
+            size: 24,
+          ),
+        ),
+        title: Text(
+          'Property: ${conversation.propertyAddress}',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text(
+              conversation.lastMessage,
+              style: TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              conversation.lastMessageTime.toString(),
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textTertiary,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
+        ),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          color: AppColors.primaryAccent,
+          size: 16,
+        ),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          context.push(
+            '/chat/${conversation.id}?otherUserId=$otherUserId&otherUserName=$otherUserName',
+          );
+        },
       ),
+    );
+  }
+
+  void _showNewConversationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: AppColors.surfaceCards,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            'New Conversation',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Select a property to start a conversation:',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // TODO: Add property selection list here
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryBackground,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppColors.borderLight,
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: AppColors.primaryAccent,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Property selection will be implemented with database integration',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // TODO: Implement create conversation logic
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('New conversation feature coming soon!'),
+                    backgroundColor: AppColors.primaryAccent,
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Create'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

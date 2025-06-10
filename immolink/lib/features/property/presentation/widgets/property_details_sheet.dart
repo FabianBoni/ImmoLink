@@ -54,3 +54,4 @@ class PropertyDetailsSheet extends StatelessWidget {
     );
   }
 }
+

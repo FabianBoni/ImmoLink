@@ -62,3 +62,4 @@ class AuthService {
     throw Exception(json.decode(response.body)['message'] ?? 'Login failed');
   }
 }
+
