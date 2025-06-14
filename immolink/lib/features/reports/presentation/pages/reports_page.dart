@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:immolink/features/auth/presentation/providers/auth_provider.dart';
 import 'package:immolink/features/payment/presentation/providers/payment_providers.dart';
 import 'package:immolink/features/property/presentation/providers/property_providers.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/providers/navigation_provider.dart';
+import '../../../../core/widgets/common_bottom_nav.dart';
 
 class ReportsPage extends ConsumerWidget {
   const ReportsPage({super.key});
@@ -13,9 +16,21 @@ class ReportsPage extends ConsumerWidget {
     final currentUser = ref.watch(currentUserProvider);
     final isLandlord = currentUser?.role == 'landlord';
 
+    // Set navigation index to Reports (3) when this page is loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(navigationIndexProvider.notifier).state = 3;
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Reports & Analytics'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            // Navigate back to dashboard instead of popping
+            context.go('/home');
+          },
+        ),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -26,6 +41,7 @@ class ReportsPage extends ConsumerWidget {
           ),
         ),
       ),
+      bottomNavigationBar: const CommonBottomNav(),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(

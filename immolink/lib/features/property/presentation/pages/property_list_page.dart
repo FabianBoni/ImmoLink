@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../domain/models/property.dart';
 import '../providers/property_providers.dart';
+import '../../../../core/providers/navigation_provider.dart';
+import '../../../../core/widgets/common_bottom_nav.dart';
 
 class PropertyListPage extends ConsumerStatefulWidget {
   const PropertyListPage({super.key});
@@ -15,6 +17,23 @@ class PropertyListPage extends ConsumerStatefulWidget {
 class _PropertyListPageState extends ConsumerState<PropertyListPage> {
   String _searchQuery = '';
   String _statusFilter = 'all';
+    @override
+  void initState() {
+    super.initState();
+    // Set navigation index to Properties (1) when this page is loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(navigationIndexProvider.notifier).state = 1;
+      
+      // Check if there's a search query in the URL
+      final uri = Uri.parse(ModalRoute.of(context)?.settings.name ?? '');
+      final searchQuery = uri.queryParameters['search'];
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        setState(() {
+          _searchQuery = searchQuery;
+        });
+      }
+    });
+  }
   
   // Design system colors
   static const Color background = Color(0xFFFFFFFF);
@@ -29,10 +48,10 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
   @override
   Widget build(BuildContext context) {
     final propertiesAsync = ref.watch(landlordPropertiesProvider);
-    
-    return Scaffold(
+      return Scaffold(
       backgroundColor: background,
       appBar: _buildAppBar(),
+      bottomNavigationBar: const CommonBottomNav(),
       body: SafeArea(
         child: Column(
           children: [

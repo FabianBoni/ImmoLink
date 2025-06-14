@@ -6,6 +6,8 @@ import '../providers/conversations_provider.dart';
 import '../../domain/models/conversation.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/providers/navigation_provider.dart';
+import '../../../../core/widgets/common_bottom_nav.dart';
 
 class ConversationsListPage extends ConsumerStatefulWidget {
   const ConversationsListPage({super.key});
@@ -19,15 +21,22 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
   String _searchQuery = '';
 
   @override
+  void initState() {
+    super.initState();
+    // Set navigation index to Messages (2) when this page is loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(navigationIndexProvider.notifier).state = 2;
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
   @override
   Widget build(BuildContext context) {
-    final conversationsAsync = ref.watch(conversationsProvider);
-
-    return Scaffold(
+    final conversationsAsync = ref.watch(conversationsProvider);    return Scaffold(
       backgroundColor: AppColors.primaryBackground,
       appBar: AppBar(
         backgroundColor: AppColors.primaryBackground,
@@ -60,6 +69,7 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
           ),
         ],
       ),
+      bottomNavigationBar: const CommonBottomNav(),
       body: Column(
         children: [
           _buildSearchBar(),

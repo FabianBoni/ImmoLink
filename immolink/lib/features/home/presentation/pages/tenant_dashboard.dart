@@ -6,6 +6,8 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/widgets/app_top_bar.dart';
 import '../../../../core/widgets/app_search_bar.dart';
+import '../../../../core/widgets/common_bottom_nav.dart';
+import '../../../../core/providers/navigation_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../property/presentation/providers/property_providers.dart';
 import '../../../property/domain/models/property.dart';
@@ -28,8 +30,16 @@ class TenantDashboard extends ConsumerStatefulWidget {
 }
 
 class _TenantDashboardState extends ConsumerState<TenantDashboard> {
-  int _selectedIndex = 0;
   int _selectedCategoryIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Set navigation index to Dashboard (0) when this page is loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(navigationIndexProvider.notifier).state = 0;
+    });
+  }
 
   final List<CategoryTab> _categories = [
     const CategoryTab(label: 'All', icon: Icons.home),
@@ -103,7 +113,7 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: const CommonBottomNav(),
     );
   }
 
@@ -547,110 +557,7 @@ class _TenantDashboardState extends ConsumerState<TenantDashboard> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.primaryBackground,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 12,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-          
-          // Handle navigation
-          switch (index) {
-            case 0: // Home - already here
-              break;
-            case 1: // Search
-              context.push('/search');
-              break;
-            case 2: // Messages
-              context.push('/conversations');
-              break;
-            case 3: // Payments
-              context.push('/payments/history');
-              break;
-            case 4: // Profile/Settings
-              context.push('/settings');
-              break;
-          }
-        },
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        selectedItemColor: AppColors.primaryAccent,
-        unselectedItemColor: AppColors.textPlaceholder,
-        items: [
-          _buildBottomNavItem(Icons.home, 'Home', 0),
-          _buildBottomNavItem(Icons.search, 'Search', 1),
-          _buildBottomNavItem(Icons.message, 'Messages', 2),
-          _buildBottomNavItem(Icons.payment, 'Payments', 3),
-          _buildBottomNavItem(Icons.person, 'Profile', 4),
-        ],
-      ),
-    );
-  }
-
-  BottomNavigationBarItem _buildBottomNavItem(IconData icon, String label, int index) {
-    final isSelected = _selectedIndex == index;
-    return BottomNavigationBarItem(
-      icon: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedIndex = index;
-          });
-          
-          // Handle navigation
-          switch (index) {
-            case 0: // Home - already here
-              break;
-            case 1: // Search
-              context.push('/search');
-              break;
-            case 2: // Messages
-              context.push('/conversations');
-              break;
-            case 3: // Payments
-              context.push('/payments/history');
-              break;
-            case 4: // Profile/Settings
-              context.push('/settings');
-              break;
-          }
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [            Icon(
-              icon,
-              color: isSelected ? AppColors.primaryAccent : AppColors.textPlaceholder,
-              size: 24.0, // iconMedium
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              label,
-              style: AppTypography.caption.copyWith(
-                color: isSelected ? AppColors.primaryAccent : AppColors.textPlaceholder,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-      label: '',
-    );
-  }
+    );  }
 
   List<Property> _getFilteredProperties(List<Property> properties) {
     // Filter properties based on selected category

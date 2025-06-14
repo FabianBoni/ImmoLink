@@ -6,6 +6,8 @@ import 'package:immolink/features/auth/presentation/providers/auth_provider.dart
 import 'package:immolink/features/property/domain/models/property.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../features/property/presentation/providers/property_providers.dart';
+import '../../../../core/providers/navigation_provider.dart';
+import '../../../../core/widgets/common_bottom_nav.dart';
 
 class LandlordDashboard extends ConsumerStatefulWidget {
   const LandlordDashboard({super.key});
@@ -15,14 +17,20 @@ class LandlordDashboard extends ConsumerStatefulWidget {
 }
 
 class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with TickerProviderStateMixin {
-  int _selectedIndex = 0;
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
   late Animation<double> _fadeAnimation;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
+    // Set navigation index to Dashboard (0) when this page is loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(navigationIndexProvider.notifier).state = 0;
+    });
+    
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -39,6 +47,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
   @override
   void dispose() {
     _animationController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -131,7 +140,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
+      bottomNavigationBar: const CommonBottomNav(),
       floatingActionButton: _buildFAB(),
     );
   }
@@ -197,7 +206,6 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
       ],
     );
   }
-
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
@@ -230,9 +238,14 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
         ],
       ),
       child: TextField(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          // TODO: Navigate to search page or show search overlay
+        controller: _searchController,
+        onChanged: (value) {
+          setState(() {
+            _searchQuery = value;
+          });
+        },
+        onSubmitted: (value) {
+          _performSearch(value);
         },
         decoration: InputDecoration(
           hintText: 'Search properties, tenants, messages...',
@@ -264,34 +277,51 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
               ),
             ),
           ),
-          suffixIcon: GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              // TODO: Show filter options
-            },
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.textTertiary.withValues(alpha: 0.1),
-                      AppColors.textTertiary.withValues(alpha: 0.05),
-                    ],
+          suffixIcon: _searchQuery.isNotEmpty
+              ? GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      Icons.clear,
+                      color: AppColors.textTertiary,
+                      size: 18,
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(8),
+                )
+              : GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _showFilterOptions();
+                  },                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.textTertiary.withValues(alpha: 0.1),
+                            AppColors.textTertiary.withValues(alpha: 0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.filter_list_outlined,
+                        color: AppColors.textTertiary,
+                        size: 18,
+                      ),
+                    ),
+                  ),
                 ),
-                child: Icon(
-                  Icons.filter_list_outlined,
-                  color: AppColors.textTertiary,
-                  size: 18,
-                ),
-              ),
-            ),
-          ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         ),
@@ -1351,105 +1381,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            AppColors.primaryBackground,
-            AppColors.luxuryGradientStart,
-          ],
-        ),
-        border: Border(
-          top: BorderSide(
-            color: AppColors.borderLight,
-            width: 1,
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowColorMedium,
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: BottomNavigationBar(
-        currentIndex: _selectedIndex,        onTap: (index) {
-          HapticFeedback.lightImpact();
-          setState(() {
-            _selectedIndex = index;
-          });
-          
-          // Navigate to the appropriate pages
-          switch (index) {
-            case 0: // Dashboard - already here
-              break;
-            case 1: // Properties
-              context.push('/properties');
-              break;
-            case 2: // Messages
-              context.push('/conversations');
-              break;
-            case 3: // Reports
-              context.push('/reports');
-              break;
-            case 4: // Profile
-              context.push('/settings');
-              break;
-          }
-        },
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        selectedItemColor: AppColors.primaryAccent,
-        unselectedItemColor: AppColors.textTertiary,
-        selectedFontSize: 12,
-        unselectedFontSize: 12,
-        items: [
-          _buildBottomNavItem(Icons.dashboard_outlined, Icons.dashboard, 'Dashboard', 0),
-          _buildBottomNavItem(Icons.home_work_outlined, Icons.home_work, 'Properties', 1),
-          _buildBottomNavItem(Icons.chat_bubble_outline, Icons.chat_bubble, 'Messages', 2),
-          _buildBottomNavItem(Icons.analytics_outlined, Icons.analytics, 'Reports', 3),
-          _buildBottomNavItem(Icons.person_outline, Icons.person, 'Profile', 4),
-        ],
-      ),
-    );
-  }
-
-  BottomNavigationBarItem _buildBottomNavItem(IconData icon, IconData activeIcon, String label, int index) {
-    final isSelected = _selectedIndex == index;
-    return BottomNavigationBarItem(
-      icon: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          gradient: isSelected ? LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.primaryAccent.withValues(alpha: 0.1),
-              AppColors.primaryAccent.withValues(alpha: 0.05),
-            ],
-          ) : null,
-          borderRadius: BorderRadius.circular(12),
-          border: isSelected ? Border.all(
-            color: AppColors.primaryAccent.withValues(alpha: 0.2),
-            width: 1,
-          ) : null,
-        ),
-        child: Icon(
-          isSelected ? activeIcon : icon,
-          color: isSelected ? AppColors.primaryAccent : AppColors.textTertiary,
-        ),
-      ),
-      label: label,
-    );
-  }
+    );  }
 
   Widget _buildFAB() {
     return Container(
@@ -1482,6 +1414,109 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
           Icons.add,
           color: AppColors.textOnAccent,
           size: 28,
+        ),
+      ),
+    );
+  }
+
+  void _performSearch(String query) {
+    if (query.isEmpty) return;
+    
+    HapticFeedback.lightImpact();
+    
+    // Navigate to different pages based on search context
+    if (query.toLowerCase().contains('message') || query.toLowerCase().contains('chat')) {
+      context.push('/conversations');
+    } else if (query.toLowerCase().contains('property') || query.toLowerCase().contains('rent')) {
+      context.push('/properties');
+    } else if (query.toLowerCase().contains('report') || query.toLowerCase().contains('analytics')) {
+      context.push('/reports');
+    } else {
+      // Generic search - go to properties with search query
+      context.push('/properties?search=${Uri.encodeComponent(query)}');
+    }
+  }
+
+  void _showFilterOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: AppColors.surfaceCards,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.borderLight,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Quick Actions',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildQuickAction('View Properties', Icons.home_work, () {
+              Navigator.pop(context);
+              context.push('/properties');
+            }),
+            _buildQuickAction('Messages', Icons.chat_bubble, () {
+              Navigator.pop(context);
+              context.push('/conversations');
+            }),
+            _buildQuickAction('Reports', Icons.analytics, () {
+              Navigator.pop(context);
+              context.push('/reports');
+            }),
+            _buildQuickAction('Settings', Icons.settings, () {
+              Navigator.pop(context);
+              context.push('/settings');
+            }),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickAction(String title, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.primaryBackground,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.borderLight),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.primaryAccent),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const Spacer(),
+            Icon(Icons.arrow_forward_ios, color: AppColors.textTertiary, size: 16),
+          ],
         ),
       ),
     );

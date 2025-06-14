@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:immolink/features/auth/presentation/providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/providers/navigation_provider.dart';
+import '../../../../core/widgets/common_bottom_nav.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
@@ -12,6 +14,11 @@ class SettingsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
     final settings = ref.watch(settingsProvider);
+    
+    // Set navigation index to Profile (4) when this page is loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(navigationIndexProvider.notifier).state = 4;
+    });
     
     return Scaffold(
       backgroundColor: AppColors.primaryBackground,
@@ -28,9 +35,13 @@ class SettingsPage extends ConsumerWidget {
         ),
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            // Navigate back to dashboard instead of popping
+            context.go('/home');
+          },
         ),
       ),
+      bottomNavigationBar: const CommonBottomNav(),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
