@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../providers/conversations_provider.dart';
 import '../../domain/models/conversation.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -33,16 +34,16 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-  @override
+  }  @override
   Widget build(BuildContext context) {
-    final conversationsAsync = ref.watch(conversationsProvider);    return Scaffold(
+    final l10n = AppLocalizations.of(context)!;
+    final conversationsAsync = ref.watch(conversationsProvider);return Scaffold(
       backgroundColor: AppColors.primaryBackground,
       appBar: AppBar(
         backgroundColor: AppColors.primaryBackground,
         elevation: 0,
         title: Text(
-          'Messages',
+          l10n.messages,
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,

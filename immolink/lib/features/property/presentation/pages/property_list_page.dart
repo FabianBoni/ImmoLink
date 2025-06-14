@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../domain/models/property.dart';
 import '../providers/property_providers.dart';
 import '../../../../core/providers/navigation_provider.dart';
@@ -44,27 +45,27 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
   static const Color textCaption = Color(0xFF8E8E93);
   static const Color success = Color(0xFF34C759);
   static const Color warning = Color.fromARGB(255, 105, 96, 82);
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final propertiesAsync = ref.watch(landlordPropertiesProvider);
       return Scaffold(
       backgroundColor: background,
-      appBar: _buildAppBar(),
+      appBar: _buildAppBar(l10n),
       bottomNavigationBar: const CommonBottomNav(),
       body: SafeArea(
         child: Column(
           children: [
-            _buildSearchAndFilter(),
+            _buildSearchAndFilter(l10n),
             Expanded(
               child: propertiesAsync.when(
-                data: (properties) => _buildPropertyList(_filterProperties(properties)),
+                data: (properties) => _buildPropertyList(_filterProperties(properties), l10n),
                 loading: () => const Center(
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(accent),
                   ),
                 ),
-                error: (error, stack) => _buildErrorState(error),
+                error: (error, stack) => _buildErrorState(error, l10n),
               ),
             ),
           ],
@@ -73,14 +74,13 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
       floatingActionButton: _buildFAB(),
     );
   }
-
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(AppLocalizations l10n) {
     return AppBar(
       backgroundColor: background,
       elevation: 0,
       systemOverlayStyle: SystemUiOverlayStyle.dark,
-      title: const Text(
-        'My Properties',
+      title: Text(
+        l10n.myProperties,
         style: TextStyle(
           color: textPrimary,
           fontSize: 18,
@@ -102,7 +102,7 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
     );
   }
 
-  Widget _buildSearchAndFilter() {
+  Widget _buildSearchAndFilter(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -114,9 +114,8 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: TextField(
-              onChanged: (value) => setState(() => _searchQuery = value),
-              decoration: const InputDecoration(
-                hintText: 'Search properties...',
+              onChanged: (value) => setState(() => _searchQuery = value),              decoration: InputDecoration(
+                hintText: l10n.searchProperties,
                 hintStyle: TextStyle(
                   color: textCaption,
                   fontSize: 16,
@@ -136,14 +135,13 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
           const SizedBox(height: 16),
           // Status filter
           Row(
-            children: [
-              _buildFilterChip('All', 'all'),
+            children: [              _buildFilterChip(l10n.all, 'all'),
               const SizedBox(width: 8),
-              _buildFilterChip('Available', 'available'),
+              _buildFilterChip(l10n.available, 'available'),
               const SizedBox(width: 8),
-              _buildFilterChip('Rented', 'rented'),
+              _buildFilterChip(l10n.rented, 'rented'),
               const SizedBox(width: 8),
-              _buildFilterChip('Maintenance', 'maintenance'),
+              _buildFilterChip(l10n.maintenance, 'maintenance'),
             ],
           ),
         ],
@@ -195,9 +193,9 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
     return filtered;
   }
 
-  Widget _buildPropertyList(List<Property> properties) {
+  Widget _buildPropertyList(List<Property> properties, AppLocalizations l10n) {
     if (properties.isEmpty) {
-      return _buildEmptyState();
+      return _buildEmptyState(l10n);
     }
     
     return RefreshIndicator(
@@ -214,14 +212,14 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
           final property = properties[index];
           return Padding(
             padding: const EdgeInsets.only(bottom: 16),
-            child: _buildPropertyCard(property),
+            child: _buildPropertyCard(property, l10n),
           );
         },
       ),
     );
   }
 
-  Widget _buildPropertyCard(Property property) {
+  Widget _buildPropertyCard(Property property, AppLocalizations l10n) {
     final statusColor = property.status == 'rented' ? success : 
                       property.status == 'available' ? accent : warning;
 
@@ -326,9 +324,8 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Monthly Rent',
+                      children: [                        Text(
+                          l10n.monthlyRent,
                           style: TextStyle(
                             fontSize: 12,
                             color: textCaption,
@@ -350,9 +347,8 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Size',
+                      children: [                        Text(
+                          l10n.size,
                           style: TextStyle(
                             fontSize: 12,
                             color: textCaption,
@@ -374,9 +370,8 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Rooms',
+                      children: [                        Text(
+                          l10n.rooms,
                           style: TextStyle(
                             fontSize: 12,
                             color: textCaption,
@@ -404,7 +399,7 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(AppLocalizations l10n) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -414,18 +409,16 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
             size: 64,
             color: textCaption.withValues(alpha: 0.5),
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'No properties found',
+          const SizedBox(height: 16),          Text(
+            l10n.noPropertiesFound,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: textPrimary,
             ),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Add your first property to get started',
+          const SizedBox(height: 8),          Text(
+            l10n.addFirstProperty,
             style: TextStyle(
               fontSize: 14,
               color: textCaption,
@@ -445,14 +438,14 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text('Add Property'),
+            child: Text(l10n.addProperty),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildErrorState(Object error) {
+  Widget _buildErrorState(Object error, AppLocalizations l10n) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -462,9 +455,8 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
             size: 64,
             color: Colors.red,
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Something went wrong',
+          const SizedBox(height: 16),          Text(
+            l10n.somethingWentWrong,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -494,7 +486,7 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text('Retry'),
+            child: Text(l10n.retry),
           ),
         ],
       ),

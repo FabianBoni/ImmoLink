@@ -46,6 +46,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
     super.dispose();
   }  @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final contactsAsync = ref.watch(allTenantsProvider);
     final propertiesAsync = ref.watch(landlordPropertiesProvider);
 
@@ -76,7 +77,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
                         data: (tenants) {
                           final filteredTenants = _filterTenants(tenants);
                           return propertiesAsync.when(
-                            data: (properties) => _buildTenantsContent(filteredTenants, properties),
+                            data: (properties) => _buildTenantsContent(filteredTenants, properties, l10n),
                             loading: () => const Center(child: CircularProgressIndicator()),
                             error: (error, _) => _buildErrorState(),
                           );
@@ -232,7 +233,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
     );
   }
 
-  Widget _buildTenantsContent(List<ContactUser> tenants, List<Property> properties) {
+  Widget _buildTenantsContent(List<ContactUser> tenants, List<Property> properties, AppLocalizations l10n) {
     if (tenants.isEmpty) {
       return _buildEmptyState();
     }
@@ -250,7 +251,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
               final tenantProperties = _getTenantProperties(tenant, properties);
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16),
-                child: _buildTenantCard(tenant, tenantProperties),
+                child: _buildTenantCard(tenant, tenantProperties, l10n),
               );
             },
           ),
@@ -357,7 +358,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
       ),
     );
   }
-  Widget _buildTenantCard(ContactUser tenant, List<Property> tenantProperties) {
+  Widget _buildTenantCard(ContactUser tenant, List<Property> tenantProperties, AppLocalizations l10n) {
     final hasProperties = tenantProperties.isNotEmpty;
     // Use status from backend if available, otherwise fall back to property-based logic
     final tenantStatus = tenant.status ?? (hasProperties ? 'active' : 'available');
@@ -480,7 +481,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
                       width: 1,
                     ),
                   ),                  child: Text(
-                    tenantStatus == 'active' ? 'ACTIVE' : 'AVAILABLE',
+                    tenantStatus == 'active' ? l10n.active.toUpperCase() : l10n.available.toUpperCase(),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -515,7 +516,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Assigned Properties',
+                          l10n.assignedProperties,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -559,7 +560,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
               children: [
                 Expanded(
                   child: _buildActionButton(
-                    'Message',
+                    l10n.message,
                     Icons.chat_bubble_outline,
                     AppColors.primaryAccent,
                     () => _messageTenant(tenant),
@@ -568,7 +569,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildActionButton(
-                    'Call',
+                    l10n.call,
                     Icons.phone_outlined,
                     AppColors.success,
                     () => _callTenant(tenant),
@@ -577,7 +578,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildActionButton(
-                    'Details',
+                    l10n.details,
                     Icons.info_outline,
                     AppColors.textSecondary,
                     () => _showTenantDetails(tenant, tenantProperties),
@@ -722,7 +723,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
             ),
           ),          const SizedBox(height: 8),
           Text(
-            'Please try again later', // l10n.pleaseTryAgainLater,
+            l10n.pleaseTryAgainLater,
             style: TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary,
@@ -738,7 +739,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
               backgroundColor: AppColors.primaryAccent,
               foregroundColor: Colors.white,
             ),
-            child: Text('Retry'), // Text(l10n.retryLoading),
+            child: Text(l10n.retryLoading),
           ),
         ],
       ),

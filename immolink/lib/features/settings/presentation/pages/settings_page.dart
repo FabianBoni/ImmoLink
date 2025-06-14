@@ -7,7 +7,6 @@ import '../../providers/settings_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/providers/navigation_provider.dart';
 import '../../../../core/providers/locale_provider.dart';
-import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/widgets/common_bottom_nav.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -56,7 +55,7 @@ class SettingsPage extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
-            _buildProfileSection(context, ref, currentUser),
+            _buildProfileSection(context, ref, currentUser, l10n),
             const SizedBox(height: 24),
             _buildPreferencesSection(context, ref, settings, l10n),
             const SizedBox(height: 24),
@@ -73,7 +72,7 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfileSection(BuildContext context, WidgetRef ref, user) {
+  Widget _buildProfileSection(BuildContext context, WidgetRef ref, user, AppLocalizations l10n) {
     return Card(
       elevation: 4,
       color: AppColors.surfaceCards,
@@ -86,7 +85,7 @@ class SettingsPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Profile',
+              l10n.profile,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
