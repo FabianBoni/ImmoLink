@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:immolink/features/auth/presentation/providers/auth_provider.dart';
 import 'package:immolink/features/property/domain/models/property.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../features/property/presentation/providers/property_providers.dart';
 import '../../../../core/providers/navigation_provider.dart';
+import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/widgets/common_bottom_nav.dart';
 
 class LandlordDashboard extends ConsumerStatefulWidget {
@@ -51,10 +53,11 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
+  @override  Widget build(BuildContext context) {
     final propertiesAsync = ref.watch(landlordPropertiesProvider);
     final currentUser = ref.watch(currentUserProvider);
+    final currency = ref.watch(currencyProvider);
+    final l10n = AppLocalizations.of(context)!;
     
     return Scaffold(
       backgroundColor: AppColors.primaryBackground,
@@ -85,11 +88,11 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
                           const SizedBox(height: 32),
                           _buildSearchBar(),
                           const SizedBox(height: 32),
-                          _buildFinancialOverview(properties),
+                          _buildFinancialOverview(context, properties, currency),
                           const SizedBox(height: 24),
                           _buildQuickAccess(),
                           const SizedBox(height: 24),
-                          _buildPropertyOverview(properties),
+                          _buildPropertyOverview(properties, currency),
                           const SizedBox(height: 24),
                           _buildRecentMessages(),
                           const SizedBox(height: 24),
@@ -334,8 +337,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
       ),
     );
   }
-
-  Widget _buildFinancialOverview(List<Property> properties) {
+  Widget _buildFinancialOverview(BuildContext context, List<Property> properties, String currency) {
+    final l10n = AppLocalizations.of(context)!;
     final totalRevenue = properties
         .where((p) => p.status == 'rented')
         .fold(0.0, (sum, p) => sum + p.rentAmount);
@@ -418,10 +421,9 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
           const SizedBox(height: 28),
           Row(
             children: [
-              Expanded(
-                child: _buildFinancialCard(
-                  'Monthly Revenue',
-                  'CHF ${totalRevenue.toStringAsFixed(0)}',
+              Expanded(                child: _buildFinancialCard(
+                  l10n.monthlyRevenue,
+                  totalRevenue.toCurrency(currency),
                   Icons.trending_up_outlined,
                   AppColors.success,
                 ),
@@ -430,7 +432,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
               Expanded(
                 child: _buildFinancialCard(
                   'Outstanding',
-                  'CHF ${outstanding.toStringAsFixed(0)}',
+                  outstanding.toCurrency(currency),
                   Icons.warning_outlined,
                   AppColors.warning,
                 ),
@@ -758,7 +760,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
     );
   }
 
-  Widget _buildPropertyOverview(List<Property> properties) {
+  Widget _buildPropertyOverview(List<Property> properties, String currency) {
     return Container(
       padding: const EdgeInsets.all(28.0),
       decoration: BoxDecoration(
@@ -855,7 +857,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
           const SizedBox(height: 28),
           ...properties.take(3).map((property) => Padding(
             padding: const EdgeInsets.only(bottom: 16),
-            child: _buildPropertyCard(property),
+            child: _buildPropertyCard(property, currency),
           )),
           if (properties.length > 3)
             GestureDetector(
@@ -905,7 +907,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
     );
   }
 
-  Widget _buildPropertyCard(Property property) {
+  Widget _buildPropertyCard(Property property, String currency) {
     final statusColor = property.status == 'rented' ? AppColors.success : 
                       property.status == 'available' ? AppColors.primaryAccent : AppColors.warning;
 
@@ -983,9 +985,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
                         Icons.attach_money,
                         size: 16,
                         color: AppColors.success,
-                      ),
-                      Text(
-                        'CHF ${property.rentAmount.toStringAsFixed(0)}/month',
+                      ),                      Text(
+                        '${property.rentAmount.toCurrency(currency)}/month',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,

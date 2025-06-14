@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../chat/domain/models/contact_user.dart';
 import '../../../chat/presentation/providers/contact_providers.dart';
@@ -94,22 +95,27 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
       floatingActionButton: _buildFAB(),
     );
   }
-
   PreferredSizeWidget _buildAppBar() {
+    final l10n = AppLocalizations.of(context)!;
     return AppBar(
       backgroundColor: AppColors.primaryBackground,
       elevation: 0,
       title: Text(
-        'Tenants',
+        l10n.tenants,
         style: TextStyle(
           color: AppColors.textPrimary,
           fontSize: 18,
           fontWeight: FontWeight.w600,
         ),
-      ),
-      leading: IconButton(
+      ),      leading: IconButton(
         icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
-        onPressed: () => context.pop(),
+        onPressed: () {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/home');
+          }
+        },
       ),
       actions: [
         IconButton(
@@ -122,15 +128,15 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
       ],
     );
   }
-
   Widget _buildHeader() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Tenant Management',
+            l10n.tenantManagement,
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w700,
@@ -140,7 +146,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
           ),
           const SizedBox(height: 8),
           Text(
-            'Manage your tenants and their property assignments',
+            l10n.manageTenantDescription,
             style: TextStyle(
               fontSize: 16,
               color: AppColors.textSecondary,
@@ -151,8 +157,8 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
       ),
     );
   }
-
   Widget _buildSearchBar() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
@@ -190,7 +196,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
-          hintText: 'Search tenants by name, email, or property...',
+          hintText: l10n.searchTenants,
           hintStyle: TextStyle(
             color: AppColors.textTertiary,
             fontSize: 15,
@@ -252,8 +258,8 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
       ],
     );
   }
-
   Widget _buildStatsCards(List<ContactUser> tenants, List<Property> properties) {
+    final l10n = AppLocalizations.of(context)!;
     final totalTenants = tenants.length;
     final occupiedProperties = properties.where((p) => p.status == 'rented').length;
     final pendingIssues = 2; // Mock data - would come from maintenance requests
@@ -264,16 +270,15 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
         children: [
           Expanded(
             child: _buildStatCard(
-              'Total Tenants',
+              l10n.totalTenants,
               totalTenants.toString(),
               Icons.people_outline,
               AppColors.primaryAccent,
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
+          const SizedBox(width: 12),          Expanded(
             child: _buildStatCard(
-              'Occupied Units',
+              l10n.occupiedUnits,
               occupiedProperties.toString(),
               Icons.home_outlined,
               AppColors.success,
@@ -282,7 +287,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
           const SizedBox(width: 12),
           Expanded(
             child: _buildStatCard(
-              'Pending Issues',
+              l10n.pendingIssues,
               pendingIssues.toString(),
               Icons.warning_outlined,
               AppColors.warning,
@@ -617,8 +622,8 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
       ),
     );
   }
-
   Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
@@ -646,7 +651,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
             ),
             const SizedBox(height: 24),
             Text(
-              'No Tenants Yet',
+              l10n.noTenantsYet,
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
@@ -655,7 +660,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
             ),
             const SizedBox(height: 8),
             Text(
-              'Add properties and invite tenants to get started',
+              l10n.addPropertiesInviteTenants,
               style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,
@@ -677,30 +682,31 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
                 ),
               ),
               icon: const Icon(Icons.add_home),
-              label: const Text('Add Property'),
+              label: Text(l10n.addProperty),
             ),
           ],
         ),
       ),
     );
   }
-
   Widget _buildLoadingState() {
-    return const Center(
+    final l10n = AppLocalizations.of(context)!;
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryAccent),
           ),
-          SizedBox(height: 16),
-          Text('Loading tenants...'),
+          const SizedBox(height: 16),
+          Text(l10n.loadingTenants),
         ],
       ),
     );
   }
 
   Widget _buildErrorState() {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -708,22 +714,22 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
           Icon(Icons.error_outline, size: 48, color: AppColors.error),
           const SizedBox(height: 16),
           Text(
-            'Error loading tenants',
+            l10n.errorLoadingTenants,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
             ),
-          ),
-          const SizedBox(height: 8),
+          ),          const SizedBox(height: 8),
           Text(
-            'Please try again later',
+            'Please try again later', // l10n.pleaseTryAgainLater,
             style: TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 16),          ElevatedButton(
+          const SizedBox(height: 16),
+          ElevatedButton(
             onPressed: () {
               ref.invalidate(allTenantsProvider);
               ref.invalidate(landlordPropertiesProvider);
@@ -732,7 +738,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
               backgroundColor: AppColors.primaryAccent,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Retry'),
+            child: Text('Retry'), // Text(l10n.retryLoading),
           ),
         ],
       ),

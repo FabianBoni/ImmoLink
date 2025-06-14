@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:immolink/features/auth/presentation/providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/providers/navigation_provider.dart';
+import '../../../../core/providers/locale_provider.dart';
+import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/widgets/common_bottom_nav.dart';
 
 class SettingsPage extends ConsumerWidget {
   const SettingsPage({super.key});
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
     final settings = ref.watch(settingsProvider);
+    final l10n = AppLocalizations.of(context)!;
     
     // Set navigation index to Profile (4) when this page is loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -26,7 +29,7 @@ class SettingsPage extends ConsumerWidget {
         backgroundColor: AppColors.primaryBackground,
         elevation: 0,
         title: Text(
-          'Settings',
+          l10n.settings,
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -55,7 +58,7 @@ class SettingsPage extends ConsumerWidget {
           children: [
             _buildProfileSection(context, ref, currentUser),
             const SizedBox(height: 24),
-            _buildPreferencesSection(context, ref, settings),
+            _buildPreferencesSection(context, ref, settings, l10n),
             const SizedBox(height: 24),
             _buildSecuritySection(context),
             const SizedBox(height: 24),
@@ -172,7 +175,7 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildPreferencesSection(BuildContext context, WidgetRef ref, AppSettings settings) {
+  Widget _buildPreferencesSection(BuildContext context, WidgetRef ref, AppSettings settings, AppLocalizations l10n) {
     return Card(
       elevation: 4,
       color: AppColors.surfaceCards,
@@ -183,9 +186,8 @@ class SettingsPage extends ConsumerWidget {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Preferences',
+          children: [            Text(
+              l10n.preferences,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -195,31 +197,31 @@ class SettingsPage extends ConsumerWidget {
             const SizedBox(height: 16),
             _buildSettingItem(
               context,
-              'Language',
-              settings.language,
+              l10n.language,
+              getLanguageName(settings.language),
               Icons.language,
               () {
-                _showLanguageSelectionDialog(context, ref);
+                _showLanguageSelectionDialog(context, ref, l10n);
               },
             ),
             Divider(color: AppColors.dividerSeparator),
             _buildSettingItem(
               context,
-              'Theme',
-              settings.theme,
+              l10n.theme,
+              _getThemeName(settings.theme, l10n),
               Icons.brightness_6,
               () {
-                _showThemeSelectionDialog(context, ref);
+                _showThemeSelectionDialog(context, ref, l10n);
               },
             ),
             Divider(color: AppColors.dividerSeparator),
             _buildSettingItem(
               context,
-              'Currency',
+              l10n.currency,
               settings.currency,
               Icons.attach_money,
               () {
-                _showCurrencySelectionDialog(context, ref);
+                _showCurrencySelectionDialog(context, ref, l10n);
               },
             ),
           ],
@@ -467,15 +469,32 @@ class SettingsPage extends ConsumerWidget {
     );
   }
 
-  void _showLanguageSelectionDialog(BuildContext context, WidgetRef ref) {
-    final languages = {'English': 'en', 'German': 'de', 'French': 'fr', 'Italian': 'it'};
+  String _getThemeName(String theme, AppLocalizations l10n) {
+    switch (theme) {
+      case 'light':
+        return l10n.light;
+      case 'dark':
+        return l10n.dark;
+      case 'system':
+        return l10n.system;
+      default:
+        return l10n.light;
+    }
+  }
+  void _showLanguageSelectionDialog(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
+    final languages = {
+      l10n.english: 'en', 
+      l10n.german: 'de', 
+      l10n.french: 'fr', 
+      l10n.italian: 'it'
+    };
     final settingsNotifier = ref.read(settingsProvider.notifier);
     
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surfaceCards,
-        title: Text('Select Language', style: TextStyle(color: AppColors.textPrimary)),
+        title: Text(l10n.selectLanguage, style: TextStyle(color: AppColors.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: languages.entries.map((entry) => ListTile(
@@ -484,7 +503,7 @@ class SettingsPage extends ConsumerWidget {
               await settingsNotifier.updateLanguage(entry.value);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Language changed to ${entry.key}')),
+                  SnackBar(content: Text(l10n.languageChangedTo(entry.key))),
                 );
                 Navigator.pop(context);
               }
@@ -494,22 +513,24 @@ class SettingsPage extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: AppColors.primaryAccent)),
+            child: Text(l10n.cancel, style: TextStyle(color: AppColors.primaryAccent)),
           ),
         ],
       ),
     );
-  }
-
-  void _showThemeSelectionDialog(BuildContext context, WidgetRef ref) {
-    final themes = {'Light': 'light', 'Dark': 'dark', 'System': 'system'};
+  }  void _showThemeSelectionDialog(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
+    final themes = {
+      l10n.light: 'light', 
+      l10n.dark: 'dark', 
+      l10n.system: 'system'
+    };
     final settingsNotifier = ref.read(settingsProvider.notifier);
     
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surfaceCards,
-        title: Text('Select Theme', style: TextStyle(color: AppColors.textPrimary)),
+        title: Text(l10n.selectTheme, style: TextStyle(color: AppColors.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: themes.entries.map((entry) => ListTile(
@@ -523,7 +544,7 @@ class SettingsPage extends ConsumerWidget {
               await settingsNotifier.updateTheme(entry.value);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Theme changed to ${entry.key}')),
+                  SnackBar(content: Text(l10n.themeChangedTo(entry.key))),
                 );
                 Navigator.pop(context);
               }
@@ -533,14 +554,13 @@ class SettingsPage extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: AppColors.primaryAccent)),
+            child: Text(l10n.cancel, style: TextStyle(color: AppColors.primaryAccent)),
           ),
         ],
       ),
     );
   }
-
-  void _showCurrencySelectionDialog(BuildContext context, WidgetRef ref) {
+  void _showCurrencySelectionDialog(BuildContext context, WidgetRef ref, AppLocalizations l10n) {
     final currencies = ['CHF', 'EUR', 'USD', 'GBP'];
     final settingsNotifier = ref.read(settingsProvider.notifier);
     
@@ -548,7 +568,7 @@ class SettingsPage extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surfaceCards,
-        title: Text('Select Currency', style: TextStyle(color: AppColors.textPrimary)),
+        title: Text(l10n.selectCurrency, style: TextStyle(color: AppColors.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: currencies.map((currency) => ListTile(
@@ -557,7 +577,7 @@ class SettingsPage extends ConsumerWidget {
               await settingsNotifier.updateCurrency(currency);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Currency changed to $currency')),
+                  SnackBar(content: Text(l10n.currencyChangedTo(currency))),
                 );
                 Navigator.pop(context);
               }
@@ -567,7 +587,7 @@ class SettingsPage extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: TextStyle(color: AppColors.primaryAccent)),
+            child: Text(l10n.cancel, style: TextStyle(color: AppColors.primaryAccent)),
           ),
         ],
       ),

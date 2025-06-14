@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:immolink/features/auth/presentation/providers/auth_provider.dart';
 import 'package:immolink/features/payment/presentation/providers/payment_providers.dart';
 import 'package:immolink/features/property/presentation/providers/property_providers.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/providers/navigation_provider.dart';
+import '../../../../core/providers/currency_provider.dart';
 import '../../../../core/widgets/common_bottom_nav.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class ReportsPage extends ConsumerWidget {
-  const ReportsPage({super.key});
-
-  @override
+  const ReportsPage({super.key});  @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
     final isLandlord = currentUser?.role == 'landlord';
+    final currency = ref.watch(currencyProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     // Set navigation index to Reports (3) when this page is loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -28,7 +30,7 @@ class ReportsPage extends ConsumerWidget {
         backgroundColor: AppColors.primaryBackground,
         elevation: 0,
         title: Text(
-          'Reports & Analytics',
+          l10n.reports,
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -60,8 +62,8 @@ class ReportsPage extends ConsumerWidget {
               _buildReportPeriod(),
               const SizedBox(height: 24),
               isLandlord
-                  ? _buildLandlordReports(context, ref)
-                  : _buildTenantReports(context, ref),
+                  ? _buildLandlordReports(context, ref, currency)
+                  : _buildTenantReports(context, ref, currency),
             ],
           ),
         ),
@@ -142,35 +144,34 @@ class ReportsPage extends ConsumerWidget {
       ),
     );
   }
-
-  Widget _buildLandlordReports(BuildContext context, WidgetRef ref) {
+  Widget _buildLandlordReports(BuildContext context, WidgetRef ref, String currency) {
     final properties = ref.watch(landlordPropertiesProvider);
     final payments = ref.watch(landlordPaymentsProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildFinancialSummary(properties, payments),
+        _buildFinancialSummary(properties, payments, currency),
         const SizedBox(height: 24),
         _buildOccupancySection(properties),
       ],
     );
   }
 
-  Widget _buildTenantReports(BuildContext context, WidgetRef ref) {
+  Widget _buildTenantReports(BuildContext context, WidgetRef ref, String currency) {
     final payments = ref.watch(tenantPaymentsProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildPaymentSummary(payments),
+        _buildPaymentSummary(payments, currency),
         const SizedBox(height: 24),
-        _buildPaymentHistory(payments),
+        _buildPaymentHistory(payments, currency),
       ],
     );
   }
 
-  Widget _buildFinancialSummary(AsyncValue properties, AsyncValue payments) {
+  Widget _buildFinancialSummary(AsyncValue properties, AsyncValue payments, String currency) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -206,11 +207,10 @@ class ReportsPage extends ConsumerWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 20),
-          _buildFinancialMetric(
+          const SizedBox(height: 20),          _buildFinancialMetric(
             icon: Icons.attach_money,
             title: 'Total Income',
-            value: 'CHF 0.00',
+            value: (0.0).toCurrency(currency),
             color: Colors.green,
             iconColor: Colors.green,
           ),
@@ -218,7 +218,7 @@ class ReportsPage extends ConsumerWidget {
           _buildFinancialMetric(
             icon: Icons.money_off,
             title: 'Outstanding Payments',
-            value: 'CHF 0.00',
+            value: (0.0).toCurrency(currency),
             color: Colors.red,
             iconColor: Colors.red,
           ),
@@ -365,7 +365,7 @@ class ReportsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildPaymentSummary(AsyncValue<List<dynamic>> payments) {
+  Widget _buildPaymentSummary(AsyncValue<List<dynamic>> payments, String currency) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -421,11 +421,10 @@ class ReportsPage extends ConsumerWidget {
                   .fold<double>(0, (sum, p) => sum + p.amount);
 
               return Column(
-                children: [
-                  _buildFinancialMetric(
+                children: [                  _buildFinancialMetric(
                     icon: Icons.attach_money,
                     title: 'Total Payments',
-                    value: 'CHF ${totalPayments.toStringAsFixed(2)}',
+                    value: totalPayments.toCurrency(currency),
                     color: Colors.blue,
                     iconColor: Colors.blue,
                   ),
@@ -433,7 +432,7 @@ class ReportsPage extends ConsumerWidget {
                   _buildFinancialMetric(
                     icon: Icons.check_circle,
                     title: 'Completed Payments',
-                    value: 'CHF ${completedPayments.toStringAsFixed(2)}',
+                    value: completedPayments.toCurrency(currency),
                     color: Colors.green,
                     iconColor: Colors.green,
                   ),
@@ -441,7 +440,7 @@ class ReportsPage extends ConsumerWidget {
                   _buildFinancialMetric(
                     icon: Icons.hourglass_empty,
                     title: 'Pending Payments',
-                    value: 'CHF ${pendingPayments.toStringAsFixed(2)}',
+                    value: pendingPayments.toCurrency(currency),
                     color: Colors.orange,
                     iconColor: Colors.orange,
                   ),
@@ -465,7 +464,7 @@ class ReportsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildPaymentHistory(AsyncValue<List<dynamic>> payments) {
+  Widget _buildPaymentHistory(AsyncValue<List<dynamic>> payments, String currency) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -572,9 +571,8 @@ class ReportsPage extends ConsumerWidget {
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'CHF ${payment.amount.toStringAsFixed(2)}',
+                            children: [                              Text(
+                                payment.amount.toCurrency(currency),
                                 style: TextStyle(
                                   color: AppColors.textPrimary,
                                   fontSize: 16,

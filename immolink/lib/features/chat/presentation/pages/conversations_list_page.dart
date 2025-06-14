@@ -48,11 +48,16 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
-        ),
-        leading: IconButton(
+        ),        leading: IconButton(
           icon: Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
-          onPressed: () => context.pop(),
-        ),        actions: [
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/home');
+            }
+          },
+        ),actions: [
           IconButton(
             icon: Icon(Icons.contacts_outlined, color: AppColors.primaryAccent),
             onPressed: () {

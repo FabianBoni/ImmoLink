@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/providers/locale_provider.dart';
+import '../../../core/providers/currency_provider.dart';
+import '../../../core/providers/theme_provider.dart';
 
 // Settings state model
 class AppSettings {
@@ -11,8 +14,8 @@ class AppSettings {
   final bool paymentReminders;
 
   AppSettings({
-    this.language = 'English',
-    this.theme = 'Light',
+    this.language = 'en',
+    this.theme = 'light',
     this.currency = 'CHF',
     this.emailNotifications = true,
     this.pushNotifications = true,
@@ -50,8 +53,8 @@ class AppSettings {
 
   factory AppSettings.fromMap(Map<String, dynamic> map) {
     return AppSettings(
-      language: map['language'] ?? 'English',
-      theme: map['theme'] ?? 'Light',
+      language: map['language'] ?? 'en',
+      theme: map['theme'] ?? 'light',
       currency: map['currency'] ?? 'CHF',
       emailNotifications: map['emailNotifications'] ?? true,
       pushNotifications: map['pushNotifications'] ?? true,
@@ -62,15 +65,17 @@ class AppSettings {
 
 // Settings notifier
 class SettingsNotifier extends StateNotifier<AppSettings> {
-  SettingsNotifier() : super(AppSettings()) {
+  final Ref ref;
+  
+  SettingsNotifier(this.ref) : super(AppSettings()) {
     _loadSettings();
   }
 
   Future<void> _loadSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final language = prefs.getString('language') ?? 'English';
-      final theme = prefs.getString('theme') ?? 'Light';
+      final language = prefs.getString('language') ?? 'en';
+      final theme = prefs.getString('theme') ?? 'light';
       final currency = prefs.getString('currency') ?? 'CHF';
       final emailNotifications = prefs.getBool('emailNotifications') ?? true;
       final pushNotifications = prefs.getBool('pushNotifications') ?? true;
@@ -84,10 +89,23 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
         pushNotifications: pushNotifications,
         paymentReminders: paymentReminders,
       );
+      
+      // Update providers with loaded settings
+      _updateProviders();
     } catch (e) {
       // If there's an error loading settings, keep defaults
       print('Error loading settings: $e');
     }
+  }
+  void _updateProviders() {
+    // Update locale provider
+    ref.read(localeProvider.notifier).updateLanguage(state.language);
+    
+    // Update currency provider
+    ref.read(currencyProvider.notifier).setCurrency(state.currency);
+    
+    // Update theme provider
+    ref.read(themeModeProvider.notifier).state = state.theme;
   }
 
   Future<void> _saveSettings() async {
@@ -103,20 +121,22 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       print('Error saving settings: $e');
     }
   }
-
   Future<void> updateLanguage(String language) async {
     state = state.copyWith(language: language);
     await _saveSettings();
+    ref.read(localeProvider.notifier).updateLanguage(language);
   }
 
   Future<void> updateTheme(String theme) async {
     state = state.copyWith(theme: theme);
     await _saveSettings();
+    ref.read(themeModeProvider.notifier).state = theme;
   }
 
   Future<void> updateCurrency(String currency) async {
     state = state.copyWith(currency: currency);
     await _saveSettings();
+    ref.read(currencyProvider.notifier).setCurrency(currency);
   }
 
   Future<void> updateEmailNotifications(bool enabled) async {
@@ -142,5 +162,5 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
 // Provider
 final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((ref) {
-  return SettingsNotifier();
+  return SettingsNotifier(ref);
 });

@@ -88,12 +88,15 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
           letterSpacing: -0.3,
         ),
       ),
-      centerTitle: true,
-      leading: IconButton(
+      centerTitle: true,      leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios, color: textPrimary, size: 20),
         onPressed: () {
           HapticFeedback.lightImpact();
-          context.pop();
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/home');
+          }
         },
       ),
     );
