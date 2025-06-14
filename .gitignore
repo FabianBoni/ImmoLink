@@ -2,3 +2,6 @@
 *.env
 /scripts/node_modules
 backend/config.js
+/immolink/windows
+/immolink/macos
+/immolink/linux

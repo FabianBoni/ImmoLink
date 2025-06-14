@@ -23,10 +23,8 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
     _searchController.dispose();
     super.dispose();
   }
-
   @override
   Widget build(BuildContext context) {
-    final currentUser = ref.watch(currentUserProvider);
     final conversationsAsync = ref.watch(conversationsProvider);
 
     return Scaffold(
@@ -74,20 +72,18 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
                 }
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: filteredConversations.length,
-                  itemBuilder: (context, index) {
+                  itemCount: filteredConversations.length,                  itemBuilder: (context, index) {
                     final conversation = filteredConversations[index];
-                    final isLandlord = currentUser?.role == 'landlord';
-                    final otherUserId = isLandlord 
-                        ? conversation.tenantId 
-                        : conversation.landlordId;
+                    final currentUser = ref.watch(currentUserProvider);
+                    final otherUserId = conversation.getOtherParticipantId(currentUser?.id ?? '');
                     
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: _buildConversationTile(
                         context,
                         conversation,
-                        otherUserId,
+                        otherUserId ?? '',
+                        currentUser?.id ?? '',
                       ),
                     );
                   },
@@ -189,16 +185,29 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
       ),
     );
   }
-
   List<Conversation> _filterConversations(List<Conversation> conversations) {
     if (_searchQuery.isEmpty) {
       return conversations;
     }
     
+    final currentUser = ref.watch(currentUserProvider);
+    final currentUserId = currentUser?.id ?? '';
+    final isLandlord = currentUser?.role == 'landlord';
+    
     return conversations.where((conversation) {
       final searchLower = _searchQuery.toLowerCase();
+      
+      // Get the other participant's name for searching
+      final otherUserName = conversation.getOtherParticipantDisplayName(
+        currentUserId, 
+        isLandlord: isLandlord,
+      ).toLowerCase();
+      
+      // Search in multiple fields
       return conversation.propertyAddress.toLowerCase().contains(searchLower) ||
-             conversation.lastMessage.toLowerCase().contains(searchLower);
+             conversation.lastMessage.toLowerCase().contains(searchLower) ||
+             otherUserName.contains(searchLower) ||
+             (conversation.otherParticipantEmail?.toLowerCase().contains(searchLower) ?? false);
     }).toList();
   }
 
@@ -249,16 +258,17 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
       ),
     );
   }
-
   Widget _buildConversationTile(
     BuildContext context, 
     Conversation conversation,
     String otherUserId,
+    String currentUserId,
   ) {
-    final isLandlord = ref.watch(currentUserProvider)?.role == 'landlord';
-    final otherUserName = isLandlord 
-        ? conversation.tenantName 
-        : conversation.landlordName;
+    final currentUser = ref.watch(currentUserProvider);
+    final isLandlord = currentUser?.role == 'landlord';    final otherUserName = conversation.getOtherParticipantDisplayName(
+      currentUserId, 
+      isLandlord: isLandlord,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -311,9 +321,8 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
             color: Colors.white,
             size: 24,
           ),
-        ),
-        title: Text(
-          'Property: ${conversation.propertyAddress}',
+        ),        title: Text(
+          otherUserName,
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 16,
@@ -323,6 +332,17 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (conversation.propertyAddress != 'Unknown Property') ...[
+              Text(
+                'Property: ${conversation.propertyAddress}',
+                style: TextStyle(
+                  color: AppColors.textTertiary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 2),
+            ],
             const SizedBox(height: 4),
             Text(
               conversation.lastMessage,
@@ -349,11 +369,10 @@ class _ConversationsListPageState extends ConsumerState<ConversationsListPage> {
           Icons.arrow_forward_ios,
           color: AppColors.primaryAccent,
           size: 16,
-        ),
-        onTap: () {
+        ),        onTap: () {
           HapticFeedback.lightImpact();
           context.push(
-            '/chat/${conversation.id}?otherUserId=$otherUserId&otherUserName=$otherUserName',
+            '/chat/${conversation.id}?otherUserId=$otherUserId&otherUser=${Uri.encodeComponent(otherUserName)}',
           );
         },
       ),
