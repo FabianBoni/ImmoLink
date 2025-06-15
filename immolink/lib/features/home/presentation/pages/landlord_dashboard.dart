@@ -7,9 +7,6 @@ import 'package:immolink/features/auth/presentation/providers/auth_provider.dart
 import 'package:immolink/features/property/domain/models/property.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../features/property/presentation/providers/property_providers.dart';
-import '../../../../core/providers/navigation_provider.dart';
-import '../../../../core/providers/currency_provider.dart';
-import '../../../../core/widgets/common_bottom_nav.dart';
 
 class LandlordDashboard extends ConsumerStatefulWidget {
   const LandlordDashboard({super.key});
@@ -19,20 +16,14 @@ class LandlordDashboard extends ConsumerStatefulWidget {
 }
 
 class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with TickerProviderStateMixin {
+  int _selectedIndex = 0;
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
   late Animation<double> _fadeAnimation;
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    // Set navigation index to Dashboard (0) when this page is loaded
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(navigationIndexProvider.notifier).state = 0;
-    });
-    
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -49,15 +40,13 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
   @override
   void dispose() {
     _animationController.dispose();
-    _searchController.dispose();
     super.dispose();
   }
 
-  @override  Widget build(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
     final propertiesAsync = ref.watch(landlordPropertiesProvider);
     final currentUser = ref.watch(currentUserProvider);
-    final currency = ref.watch(currencyProvider);
-    final l10n = AppLocalizations.of(context)!;
     
     return Scaffold(
       backgroundColor: AppColors.primaryBackground,
@@ -88,11 +77,11 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
                           const SizedBox(height: 32),
                           _buildSearchBar(),
                           const SizedBox(height: 32),
-                          _buildFinancialOverview(context, properties, currency),
+                          _buildFinancialOverview(properties),
                           const SizedBox(height: 24),
                           _buildQuickAccess(),
                           const SizedBox(height: 24),
-                          _buildPropertyOverview(properties, currency),
+                          _buildPropertyOverview(properties),
                           const SizedBox(height: 24),
                           _buildRecentMessages(),
                           const SizedBox(height: 24),
@@ -143,7 +132,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
           ),
         ),
       ),
-      bottomNavigationBar: const CommonBottomNav(),
+      bottomNavigationBar: _buildBottomNav(),
       floatingActionButton: _buildFAB(),
     );
   }
@@ -171,13 +160,13 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
       ],
     );
   }
-
   Widget _buildWelcomeSection(String name) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Good morning,',
+          l10n.goodMorning,
           style: TextStyle(
             fontSize: 16,
             color: AppColors.textTertiary,
@@ -198,7 +187,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
         ),
         const SizedBox(height: 8),
         Text(
-          'Manage your properties and tenants',
+          l10n.managePropertiesAndTenants,
           style: TextStyle(
             fontSize: 16,
             color: AppColors.textTertiary,
@@ -210,6 +199,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
     );
   }
   Widget _buildSearchBar() {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -240,18 +230,12 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
           ),
         ],
       ),
-      child: TextField(
-        controller: _searchController,
-        onChanged: (value) {
-          setState(() {
-            _searchQuery = value;
-          });
-        },
-        onSubmitted: (value) {
-          _performSearch(value);
+      child: TextField(        onTap: () {
+          HapticFeedback.lightImpact();
+          context.push('/search');
         },
         decoration: InputDecoration(
-          hintText: 'Search properties, tenants, messages...',
+          hintText: l10n.searchPropertiesTenantsMessages,
           hintStyle: TextStyle(
             color: AppColors.textTertiary,
             fontSize: 15,
@@ -280,51 +264,33 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
               ),
             ),
           ),
-          suffixIcon: _searchQuery.isNotEmpty
-              ? GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    _searchController.clear();
-                    setState(() {
-                      _searchQuery = '';
-                    });
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(
-                      Icons.clear,
-                      color: AppColors.textTertiary,
-                      size: 18,
-                    ),
+          suffixIcon: GestureDetector(            onTap: () {
+              HapticFeedback.lightImpact();
+              _showFilterDialog(context);
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.textTertiary.withValues(alpha: 0.1),
+                      AppColors.textTertiary.withValues(alpha: 0.05),
+                    ],
                   ),
-                )
-              : GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    _showFilterOptions();
-                  },                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppColors.textTertiary.withValues(alpha: 0.1),
-                            AppColors.textTertiary.withValues(alpha: 0.05),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.filter_list_outlined,
-                        color: AppColors.textTertiary,
-                        size: 18,
-                      ),
-                    ),
-                  ),
+                  borderRadius: BorderRadius.circular(8),
                 ),
+                child: Icon(
+                  Icons.filter_list_outlined,
+                  color: AppColors.textTertiary,
+                  size: 18,
+                ),
+              ),
+            ),
+          ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         ),
@@ -337,8 +303,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
       ),
     );
   }
-  Widget _buildFinancialOverview(BuildContext context, List<Property> properties, String currency) {
-    final l10n = AppLocalizations.of(context)!;
+
+  Widget _buildFinancialOverview(List<Property> properties) {
     final totalRevenue = properties
         .where((p) => p.status == 'rented')
         .fold(0.0, (sum, p) => sum + p.rentAmount);
@@ -420,10 +386,10 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
           ),
           const SizedBox(height: 28),
           Row(
-            children: [
-              Expanded(                child: _buildFinancialCard(
-                  l10n.monthlyRevenue,
-                  totalRevenue.toCurrency(currency),
+            children: [              Expanded(
+                child: _buildFinancialCard(
+                  AppLocalizations.of(context)!.monthlyRevenue,
+                  'CHF ${totalRevenue.toStringAsFixed(0)}',
                   Icons.trending_up_outlined,
                   AppColors.success,
                 ),
@@ -431,8 +397,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
               const SizedBox(width: 16),
               Expanded(
                 child: _buildFinancialCard(
-                  'Outstanding',
-                  outstanding.toCurrency(currency),
+                  AppLocalizations.of(context)!.outstanding,
+                  'CHF ${outstanding.toStringAsFixed(0)}',
                   Icons.warning_outlined,
                   AppColors.warning,
                 ),
@@ -599,9 +565,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
                   size: 24,
                 ),
               ),
-              const SizedBox(width: 18),
-              Text(
-                'Quick Actions',
+              const SizedBox(width: 18),              Text(
+                AppLocalizations.of(context)!.quickActions,
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -614,9 +579,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
           const SizedBox(height: 28),
           Row(
             children: [
-              Expanded(
-                child: _buildQuickAccessButton(
-                  'Add Property',
+              Expanded(                child: _buildQuickAccessButton(
+                  AppLocalizations.of(context)!.addProperty,
                   Icons.add_home_outlined,
                   AppColors.primaryAccent,
                   () {
@@ -626,9 +590,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
                 ),
               ),
               const SizedBox(width: 16),
-              Expanded(
-                child: _buildQuickAccessButton(
-                  'Messages',
+              Expanded(                child: _buildQuickAccessButton(
+                  AppLocalizations.of(context)!.messages,
                   Icons.chat_bubble_outline,
                   AppColors.success,
                   () {
@@ -638,9 +601,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
                 ),
               ),
               const SizedBox(width: 16),
-              Expanded(
-                child: _buildQuickAccessButton(
-                  'Reports',
+              Expanded(                child: _buildQuickAccessButton(
+                  AppLocalizations.of(context)!.reports,
                   Icons.analytics_outlined,
                   AppColors.warning,
                   () {
@@ -654,9 +616,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
           const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(
-                child: _buildQuickAccessButton(
-                  'Maintenance',
+              Expanded(                child: _buildQuickAccessButton(
+                  AppLocalizations.of(context)!.maintenance,
                   Icons.build_circle_outlined,
                   AppColors.error,
                   () {
@@ -666,9 +627,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
                 ),
               ),
               const SizedBox(width: 16),
-              Expanded(
-                child: _buildQuickAccessButton(
-                  'Tenants',
+              Expanded(                child: _buildQuickAccessButton(
+                  AppLocalizations.of(context)!.tenants,
                   Icons.people_outline,
                   AppColors.luxuryGold,
                   () {
@@ -678,9 +638,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
                 ),
               ),
               const SizedBox(width: 16),
-              Expanded(
-                child: _buildQuickAccessButton(
-                  'Settings',
+              Expanded(                child: _buildQuickAccessButton(
+                  AppLocalizations.of(context)!.settings,
                   Icons.settings_outlined,
                   AppColors.textSecondary,
                   () {
@@ -760,7 +719,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
     );
   }
 
-  Widget _buildPropertyOverview(List<Property> properties, String currency) {
+  Widget _buildPropertyOverview(List<Property> properties) {
     return Container(
       padding: const EdgeInsets.all(28.0),
       decoration: BoxDecoration(
@@ -857,7 +816,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
           const SizedBox(height: 28),
           ...properties.take(3).map((property) => Padding(
             padding: const EdgeInsets.only(bottom: 16),
-            child: _buildPropertyCard(property, currency),
+            child: _buildPropertyCard(property),
           )),
           if (properties.length > 3)
             GestureDetector(
@@ -907,7 +866,7 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
     );
   }
 
-  Widget _buildPropertyCard(Property property, String currency) {
+  Widget _buildPropertyCard(Property property) {
     final statusColor = property.status == 'rented' ? AppColors.success : 
                       property.status == 'available' ? AppColors.primaryAccent : AppColors.warning;
 
@@ -969,7 +928,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [                  Text(
+                children: [
+                  Text(
                     property.address.street,
                     style: TextStyle(
                       fontSize: 16,
@@ -985,8 +945,9 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
                         Icons.attach_money,
                         size: 16,
                         color: AppColors.success,
-                      ),                      Text(
-                        '${property.rentAmount.toCurrency(currency)}/month',
+                      ),
+                      Text(
+                        'CHF ${property.rentAmount.toStringAsFixed(0)}/month',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1008,9 +969,8 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
                   color: statusColor.withValues(alpha: 0.2),
                   width: 1,
                 ),
-              ),
-              child: Text(
-                property.status.toUpperCase(),
+              ),              child: Text(
+                _getLocalizedStatus(property.status),
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -1382,7 +1342,105 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
           ),
         ],
       ),
-    );  }
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.primaryBackground,
+            AppColors.luxuryGradientStart,
+          ],
+        ),
+        border: Border(
+          top: BorderSide(
+            color: AppColors.borderLight,
+            width: 1,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowColorMedium,
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: BottomNavigationBar(
+        currentIndex: _selectedIndex,        onTap: (index) {
+          HapticFeedback.lightImpact();
+          setState(() {
+            _selectedIndex = index;
+          });
+          
+          // Navigate to different routes based on index
+          switch (index) {
+            case 0:
+              // Already on dashboard - no navigation needed
+              break;
+            case 1:
+              context.push('/properties');
+              break;
+            case 2:
+              context.push('/conversations');
+              break;
+            case 3:
+              context.push('/reports');
+              break;
+            case 4:
+              context.push('/profile');
+              break;
+          }
+        },
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        selectedItemColor: AppColors.primaryAccent,
+        unselectedItemColor: AppColors.textTertiary,
+        selectedFontSize: 12,
+        unselectedFontSize: 12,        items: [
+          _buildBottomNavItem(Icons.dashboard_outlined, Icons.dashboard, AppLocalizations.of(context)!.dashboard, 0),
+          _buildBottomNavItem(Icons.home_work_outlined, Icons.home_work, AppLocalizations.of(context)!.properties, 1),
+          _buildBottomNavItem(Icons.chat_bubble_outline, Icons.chat_bubble, AppLocalizations.of(context)!.messages, 2),
+          _buildBottomNavItem(Icons.analytics_outlined, Icons.analytics, AppLocalizations.of(context)!.reports, 3),
+          _buildBottomNavItem(Icons.person_outline, Icons.person, AppLocalizations.of(context)!.profile, 4),
+        ],
+      ),
+    );
+  }
+
+  BottomNavigationBarItem _buildBottomNavItem(IconData icon, IconData activeIcon, String label, int index) {
+    final isSelected = _selectedIndex == index;
+    return BottomNavigationBarItem(
+      icon: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          gradient: isSelected ? LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primaryAccent.withValues(alpha: 0.1),
+              AppColors.primaryAccent.withValues(alpha: 0.05),
+            ],
+          ) : null,
+          borderRadius: BorderRadius.circular(12),
+          border: isSelected ? Border.all(
+            color: AppColors.primaryAccent.withValues(alpha: 0.2),
+            width: 1,
+          ) : null,
+        ),
+        child: Icon(
+          isSelected ? activeIcon : icon,
+          color: isSelected ? AppColors.primaryAccent : AppColors.textTertiary,
+        ),
+      ),
+      label: label,
+    );
+  }
 
   Widget _buildFAB() {
     return Container(
@@ -1414,111 +1472,71 @@ class _LandlordDashboardState extends ConsumerState<LandlordDashboard> with Tick
         child: Icon(
           Icons.add,
           color: AppColors.textOnAccent,
-          size: 28,
-        ),
+          size: 28,        ),
       ),
     );
   }
-
-  void _performSearch(String query) {
-    if (query.isEmpty) return;
-    
-    HapticFeedback.lightImpact();
-    
-    // Navigate to different pages based on search context
-    if (query.toLowerCase().contains('message') || query.toLowerCase().contains('chat')) {
-      context.push('/conversations');
-    } else if (query.toLowerCase().contains('property') || query.toLowerCase().contains('rent')) {
-      context.push('/properties');
-    } else if (query.toLowerCase().contains('report') || query.toLowerCase().contains('analytics')) {
-      context.push('/reports');
-    } else {
-      // Generic search - go to properties with search query
-      context.push('/properties?search=${Uri.encodeComponent(query)}');
+  
+  String _getLocalizedStatus(String status) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (status.toLowerCase()) {
+      case 'rented':
+        return l10n.rented.toUpperCase();      case 'available':
+        return l10n.available.toUpperCase();
+      default:
+        return status.toUpperCase();
     }
   }
 
-  void _showFilterOptions() {
-    showModalBottomSheet(
+  void _showFilterDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    showDialog(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: AppColors.surfaceCards,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(20),
-        child: Column(
+      builder: (context) => AlertDialog(
+        title: Text(l10n.filterProperties),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.borderLight,
-                borderRadius: BorderRadius.circular(2),
-              ),
+            ListTile(
+              leading: Icon(Icons.all_inclusive, color: AppColors.primaryAccent),
+              title: Text(l10n.all),
+              onTap: () {
+                Navigator.of(context).pop();
+                // TODO: Apply filter for all properties
+              },
             ),
-            const SizedBox(height: 20),
-            Text(
-              'Quick Actions',
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+            ListTile(
+              leading: Icon(Icons.check_circle, color: AppColors.success),
+              title: Text(l10n.available),
+              onTap: () {
+                Navigator.of(context).pop();
+                // TODO: Apply filter for available properties
+              },
             ),
-            const SizedBox(height: 20),
-            _buildQuickAction('View Properties', Icons.home_work, () {
-              Navigator.pop(context);
-              context.push('/properties');
-            }),
-            _buildQuickAction('Messages', Icons.chat_bubble, () {
-              Navigator.pop(context);
-              context.push('/conversations');
-            }),
-            _buildQuickAction('Reports', Icons.analytics, () {
-              Navigator.pop(context);
-              context.push('/reports');
-            }),
-            _buildQuickAction('Settings', Icons.settings, () {
-              Navigator.pop(context);
-              context.push('/settings');
-            }),
-            const SizedBox(height: 20),
+            ListTile(
+              leading: Icon(Icons.home, color: AppColors.info),
+              title: Text(l10n.occupied),
+              onTap: () {
+                Navigator.of(context).pop();
+                // TODO: Apply filter for occupied properties
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.build, color: AppColors.warning),
+              title: Text(l10n.maintenance),
+              onTap: () {
+                Navigator.of(context).pop();
+                // TODO: Apply filter for maintenance properties
+              },
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildQuickAction(String title, IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.primaryBackground,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.borderLight),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.primaryAccent),
-            const SizedBox(width: 16),
-            Text(
-              title,
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const Spacer(),
-            Icon(Icons.arrow_forward_ios, color: AppColors.textTertiary, size: 16),
-          ],
-        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(l10n.cancel),
+          ),
+        ],
       ),
     );
   }

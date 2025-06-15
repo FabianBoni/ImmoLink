@@ -19,6 +19,8 @@ import 'package:immolink/features/reports/presentation/pages/reports_page.dart';
 import 'package:immolink/features/settings/presentation/pages/settings_page.dart';
 import 'package:immolink/features/settings/presentation/pages/change_password_page.dart';
 import 'package:immolink/features/profile/presentation/pages/edit_profile_page.dart';
+import 'package:immolink/features/profile/presentation/pages/profile_page.dart';
+import 'package:immolink/features/search/presentation/pages/search_page.dart';
 import 'package:immolink/features/tenant/presentation/pages/tenants_page.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -96,11 +98,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/change-password',
         builder: (context, state) => const ChangePasswordPage(),
-      ),
-      // Edit Profile route
+      ),      // Edit Profile route
       GoRoute(
         path: '/edit-profile',
         builder: (context, state) => const EditProfilePage(),
+      ),      // Profile route
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfilePage(),
+      ),
+      // Search route
+      GoRoute(
+        path: '/search',
+        builder: (context, state) => const SearchPage(),
       ),      // Reports route
       GoRoute(
         path: '/reports',

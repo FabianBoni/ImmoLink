@@ -296,9 +296,8 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
                         decoration: BoxDecoration(
                           color: statusColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          property.status.toUpperCase(),
+                        ),                        child: Text(
+                          _getLocalizedStatus(property.status, l10n),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -498,12 +497,22 @@ class _PropertyListPageState extends ConsumerState<PropertyListPage> {
       onPressed: () {
         HapticFeedback.mediumImpact();
         context.push('/add-property');
-      },
-      backgroundColor: accent,
+      },      backgroundColor: accent,
       foregroundColor: Colors.white,
       elevation: 4,
       child: const Icon(Icons.add, size: 24),
     );
+  }
+  
+  String _getLocalizedStatus(String status, AppLocalizations l10n) {
+    switch (status.toLowerCase()) {
+      case 'rented':
+        return l10n.rented.toUpperCase();
+      case 'available':
+        return l10n.available.toUpperCase();
+      default:
+        return status.toUpperCase();
+    }
   }
 }
 

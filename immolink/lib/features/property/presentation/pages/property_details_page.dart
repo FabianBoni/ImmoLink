@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:immolink/features/property/presentation/widgets/invite_tenant_dialog.dart';
 import '../../domain/models/property.dart';
 import '../providers/property_providers.dart';
@@ -51,7 +52,7 @@ class PropertyDetailsPage extends ConsumerWidget {
     return ElevatedButton.icon(
       onPressed: () => _showInviteTenantDialog(context, property),
       icon: const Icon(Icons.person_add),
-      label: const Text('Invite Tenant'),
+      label: Text(AppLocalizations.of(context)!.inviteTenant),
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -120,24 +121,21 @@ class PropertyDetailsPage extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
-        children: [
-          _buildStatCard(
+        children: [          _buildStatCard(
             context,
             Icons.straighten,
             '${property.details.size}',
-            'm²',
-          ),
-          _buildStatCard(
+            AppLocalizations.of(context)!.squareMeters,
+          ),_buildStatCard(
             context,
             Icons.meeting_room,
             '${property.details.rooms}',
-            'Rooms',
-          ),
-          _buildStatCard(
+            AppLocalizations.of(context)!.rooms,
+          ),          _buildStatCard(
             context,
             Icons.attach_money,
             '${property.rentAmount}',
-            'CHF/month',
+            AppLocalizations.of(context)!.chfPerMonth,
           ),
         ],
       ),
@@ -189,14 +187,13 @@ class PropertyDetailsPage extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Description',
+        children: [          Text(
+            AppLocalizations.of(context)!.description,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 16),
           Text(
-            'Modern property located in a prime location with excellent amenities and convenient access to public transportation.',
+            AppLocalizations.of(context)!.propertyDescription,
             style: TextStyle(
               color: Colors.grey[700],
               height: 1.5,
@@ -212,9 +209,8 @@ class PropertyDetailsPage extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Amenities',
+        children: [          Text(
+            AppLocalizations.of(context)!.amenities,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 16),
@@ -244,9 +240,8 @@ class PropertyDetailsPage extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Location',
+        children: [          Text(
+            AppLocalizations.of(context)!.location,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 16),
@@ -275,9 +270,8 @@ class PropertyDetailsPage extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Financial Details',
+        children: [          Text(
+            AppLocalizations.of(context)!.financialDetails,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: 16),
@@ -287,13 +281,12 @@ class PropertyDetailsPage extends ConsumerWidget {
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
+              child: Column(                children: [
                   _buildFinancialRow(
-                      'Monthly Rent', '${property.rentAmount} CHF'),
+                      AppLocalizations.of(context)!.monthlyRent, '${property.rentAmount} CHF'),
                   const Divider(),
                   _buildFinancialRow(
-                    'Outstanding Payments',
+                    AppLocalizations.of(context)!.outstandingPayments,
                     '${property.outstandingPayments} CHF',
                   ),
                 ],

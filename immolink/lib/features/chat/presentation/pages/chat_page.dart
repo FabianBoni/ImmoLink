@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:immolink/features/auth/presentation/providers/auth_provider.dart';
 import 'package:immolink/features/chat/domain/models/chat_message.dart';
 import 'package:immolink/features/chat/presentation/providers/messages_provider.dart';
@@ -411,9 +412,8 @@ class _ChatPageState extends ConsumerState<ChatPage> with TickerProviderStateMix
                       controller: _messageController,
                       style: AppTypography.body.copyWith(
                         color: AppColors.textPrimary,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Type a message...',
+                      ),                      decoration: InputDecoration(
+                        hintText: AppLocalizations.of(context)!.typeAMessage,
                         hintStyle: AppTypography.body.copyWith(
                           color: AppColors.textTertiary,
                         ),
