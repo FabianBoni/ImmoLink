@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +29,7 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
   final _postalCodeController = TextEditingController();
   List<String> selectedAmenities = [];
   List<String> selectedImages = [];
+  FilePickerResult? _pickerResult; // Store the picker result for web
   bool _isLoading = false;
 
   late AnimationController _animationController;
@@ -66,7 +69,6 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
       _populateFields(widget.propertyToEdit!);
     }
   }
-
   void _populateFields(Property property) {
     _addressController.text = property.address.street;
     _cityController.text = property.address.city;
@@ -75,6 +77,7 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
     _sizeController.text = property.details.size.toString();
     _roomsController.text = property.details.rooms.toString();
     selectedAmenities = List.from(property.details.amenities);
+    selectedImages = List.from(property.imageUrls);
   }
 
   @override
@@ -336,8 +339,7 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
 
   Widget _buildImagesCard() {
     return _buildCard(
-      title: 'Images',
-      children: [
+      title: 'Images',      children: [
         GestureDetector(
           onTap: _pickImages,
           child: AnimatedContainer(
@@ -377,6 +379,54 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
             ),
           ),
         ),
+        if (selectedImages.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          Container(
+            height: 100,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: selectedImages.length,
+              itemBuilder: (context, index) {
+                final imagePath = selectedImages[index];
+                return Container(
+                  width: 100,
+                  margin: EdgeInsets.only(right: index < selectedImages.length - 1 ? 8 : 0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: divider),
+                  ),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: _buildImagePreview(imagePath),
+                      ),
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: GestureDetector(
+                          onTap: () => _removeImage(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: error.withValues(alpha: 0.9),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.close,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -501,19 +551,30 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
         ),
       ),
     );
-  }
-
-  Future<void> _pickImages() async {
+  }  Future<void> _pickImages() async {
     try {
       HapticFeedback.lightImpact();
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.image,
         allowMultiple: true,
+        withData: true, // Important for web
       );
 
-      if (result != null) {
+      if (result != null && result.files.isNotEmpty) {
         setState(() {
-          selectedImages = result.files.map((file) => file.path ?? '').toList();
+          _pickerResult = result; // Store the result
+          // For web, we need to handle bytes differently
+          if (kIsWeb) {
+            selectedImages = result.files
+                .where((file) => file.bytes != null)
+                .map((file) => file.name) // Use file name as identifier on web
+                .toList();
+          } else {
+            selectedImages = result.files
+                .where((file) => file.path != null)
+                .map((file) => file.path!)
+                .toList();
+          }
         });
         
         ScaffoldMessenger.of(context).showSnackBar(
@@ -525,11 +586,22 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
             margin: const EdgeInsets.all(16),
           ),
         );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('No images selected'),
+            backgroundColor: textSecondary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
       }
     } catch (e) {
+      print('Error selecting images: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Error selecting images'),
+          content: Text('Error selecting images: ${e.toString()}'),
           backgroundColor: error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -537,6 +609,128 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
         ),
       );
     }
+  }
+  Widget _buildImagePreview(String imagePath) {
+    // Check if it's a URL (existing image) or a local file path (new upload)
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      // Remote image URL
+      return Image.network(
+        imagePath,
+        width: 100,
+        height: 100,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: 100,
+            height: 100,
+            color: surface,
+            child: Icon(
+              Icons.broken_image_outlined,
+              color: textCaption,
+              size: 32,
+            ),
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 100,
+            height: 100,
+            color: surface,
+            child: Center(
+              child: CircularProgressIndicator(
+                color: accent,
+                strokeWidth: 2,
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            ),
+          );
+        },
+      );
+    } else if (kIsWeb) {
+      // Web: Use bytes from FilePickerResult
+      if (_pickerResult != null) {
+        final file = _pickerResult!.files.firstWhere(
+          (file) => file.name == imagePath,
+          orElse: () => _pickerResult!.files.first,
+        );
+        
+        if (file.bytes != null) {
+          return Image.memory(
+            file.bytes!,
+            width: 100,
+            height: 100,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                width: 100,
+                height: 100,
+                color: surface,
+                child: Icon(
+                  Icons.broken_image_outlined,
+                  color: textCaption,
+                  size: 32,
+                ),
+              );
+            },
+          );
+        }
+      }
+      
+      // Fallback for web
+      return Container(
+        width: 100,
+        height: 100,
+        color: surface,
+        child: Icon(
+          Icons.image_outlined,
+          color: textCaption,
+          size: 32,
+        ),
+      );
+    } else {
+      // Mobile: Local file path
+      return Image.file(
+        File(imagePath),
+        width: 100,
+        height: 100,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: 100,
+            height: 100,
+            color: surface,
+            child: Icon(
+              Icons.broken_image_outlined,
+              color: textCaption,
+              size: 32,
+            ),
+          );
+        },
+      );
+    }
+  }
+
+  void _removeImage(int index) {
+    HapticFeedback.lightImpact();
+    setState(() {
+      if (index >= 0 && index < selectedImages.length) {
+        selectedImages.removeAt(index);
+      }
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Image removed'),
+        backgroundColor: textSecondary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   void _submitForm() async {
@@ -548,12 +742,10 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
 
       try {
         final currentUser = ref.read(currentUserProvider);
-        final landlordId = currentUser?.id.toString() ?? '';
-
-        final property = Property(
-          id: const Uuid().v4(),
+        final landlordId = currentUser?.id.toString() ?? '';        final property = Property(
+          id: widget.propertyToEdit?.id ?? const Uuid().v4(),
           landlordId: landlordId,
-          tenantIds: [],
+          tenantIds: widget.propertyToEdit?.tenantIds ?? [],
           address: Address(
             street: _addressController.text,
             city: _cityController.text,
@@ -566,20 +758,36 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
             rooms: int.tryParse(_roomsController.text) ?? 0,
             amenities: selectedAmenities,
           ),
-          status: 'available',
-        );
-
-        await ref.read(propertyServiceProvider).addProperty(property);
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Property created successfully!'),
-            backgroundColor: success,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
+          status: widget.propertyToEdit?.status ?? 'available',
+          imageUrls: selectedImages.isNotEmpty ? selectedImages : (widget.propertyToEdit?.imageUrls ?? []),
+          outstandingPayments: widget.propertyToEdit?.outstandingPayments ?? 0.0,
+        );        if (widget.propertyToEdit != null) {
+          // Update existing property
+          await ref.read(propertyServiceProvider).updateProperty(property);
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Property updated successfully!'),
+              backgroundColor: success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              margin: const EdgeInsets.all(16),
+            ),
+          );
+        } else {
+          // Create new property
+          await ref.read(propertyServiceProvider).addProperty(property);
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Property created successfully!'),
+              backgroundColor: success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              margin: const EdgeInsets.all(16),
+            ),
+          );
+        }
         
         context.pop();
       } catch (e) {

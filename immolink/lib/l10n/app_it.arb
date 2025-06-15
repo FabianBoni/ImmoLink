@@ -176,10 +176,12 @@
   "completed": "Completato",
   "cancelled": "Annullato",
   "priority": "Priorità",
-  "low": "Bassa",
-  "medium": "Media",
+  "low": "Bassa",  "medium": "Media",
   "high": "Alta",
-  "emergency": "Emergenza",
-  "noMaintenanceRequests": "Nessuna richiesta di manutenzione",
-  "noMaintenanceRequestsDescription": "Tutte le richieste di manutenzione appariranno qui"
+  "emergency": "Emergenza",  "noMaintenanceRequests": "Nessuna richiesta di manutenzione",
+  "noMaintenanceRequestsDescription": "Tutte le richieste di manutenzione appariranno qui",
+  "getDirections": "Ottieni indicazioni",
+  "location": "Posizione",
+  "locationNotAvailable": "Posizione non disponibile",
+  "addressDisplayOnly": "Indirizzo mostrato solo per riferimento"
 }

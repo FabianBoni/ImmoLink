@@ -176,10 +176,13 @@
   "completed": "Completed",
   "cancelled": "Cancelled",
   "priority": "Priority",
-  "low": "Low",
-  "medium": "Medium",
+  "low": "Low",  "medium": "Medium",
   "high": "High",
   "emergency": "Emergency",
   "noMaintenanceRequests": "No maintenance requests",
-  "noMaintenanceRequestsDescription": "All maintenance requests will appear here"
+  "noMaintenanceRequestsDescription": "All maintenance requests will appear here",
+  "getDirections": "Get Directions",
+  "location": "Location",
+  "locationNotAvailable": "Location not available",
+  "addressDisplayOnly": "Address shown for reference only"
 }

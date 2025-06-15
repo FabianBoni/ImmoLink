@@ -176,10 +176,12 @@
   "completed": "Terminé",
   "cancelled": "Annulé",
   "priority": "Priorité",
-  "low": "Faible",
-  "medium": "Moyen",
+  "low": "Faible",  "medium": "Moyen",
   "high": "Élevé",
-  "emergency": "Urgence",
-  "noMaintenanceRequests": "Aucune demande de maintenance",
-  "noMaintenanceRequestsDescription": "Toutes les demandes de maintenance apparaîtront ici"
+  "emergency": "Urgence",  "noMaintenanceRequests": "Aucune demande de maintenance",
+  "noMaintenanceRequestsDescription": "Toutes les demandes de maintenance apparaîtront ici",
+  "getDirections": "Obtenir l'itinéraire",
+  "location": "Emplacement",
+  "locationNotAvailable": "Emplacement non disponible",
+  "addressDisplayOnly": "Adresse affichée à titre de référence uniquement"
 }

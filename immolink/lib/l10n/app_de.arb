@@ -176,10 +176,12 @@
   "completed": "Abgeschlossen",
   "cancelled": "Storniert",
   "priority": "Priorität",
-  "low": "Niedrig",
-  "medium": "Mittel",
+  "low": "Niedrig",  "medium": "Mittel",
   "high": "Hoch",
-  "emergency": "Notfall",
-  "noMaintenanceRequests": "Keine Wartungsanfragen",
-  "noMaintenanceRequestsDescription": "Alle Wartungsanfragen werden hier angezeigt"
+  "emergency": "Notfall",  "noMaintenanceRequests": "Keine Wartungsanfragen",
+  "noMaintenanceRequestsDescription": "Alle Wartungsanfragen werden hier angezeigt",
+  "getDirections": "Route anzeigen",
+  "location": "Standort",
+  "locationNotAvailable": "Standort nicht verfügbar",
+  "addressDisplayOnly": "Adresse nur zur Referenz angezeigt"
 }

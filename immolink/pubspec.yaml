@@ -25,6 +25,9 @@ dependencies:
   image_picker: ^1.1.2
   uuid: ^4.5.1
   google_fonts: ^6.1.0
+  google_maps_flutter: ^2.6.1
+  geocoding: ^3.0.0
+  url_launcher: ^6.3.1
 
 flutter:
   uses-material-design: true

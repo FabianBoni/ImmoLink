@@ -148,5 +148,30 @@ class PropertyService {
       throw Exception('Failed to load properties');
     }
   }
+
+  Future<void> updateProperty(Property property) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId') ??
+        (throw Exception('User not authenticated'));
+
+    final propertyData = {
+      ...property.toMap(),
+      'landlordId': userId,
+    };
+
+    print('Updating property: ${property.id}');
+    print('Property data to send: ${json.encode(propertyData)}');
+
+    final response = await http.put(
+      Uri.parse('$_apiUrl/properties/${property.id}'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(propertyData),
+    );
+
+    if (response.statusCode != 200) {
+      print('Server response: ${response.body}');
+      throw Exception('Failed to update property: ${response.statusCode}');
+    }
+  }
 }
 
