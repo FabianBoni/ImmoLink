@@ -166,8 +166,20 @@
   "logoutConfirmation": "Sei sicuro di voler uscire?",
   "changePassword": "Cambia password",
   "all": "Tutti",  "searchToFindResults": "Inizia a digitare per trovare risultati",
-  "searchHint": "Cerca proprietà, inquilini o messaggi",
-  "noResultsFound": "Nessun risultato trovato",
+  "searchHint": "Cerca proprietà, inquilini o messaggi",  "noResultsFound": "Nessun risultato trovato",
   "tryDifferentSearch": "Prova un termine di ricerca diverso",
-  "filterProperties": "Filtra proprietà"
+  "filterProperties": "Filtra proprietà",
+  "maintenanceRequests": "Richieste di manutenzione",
+  "filterRequests": "Filtra richieste",
+  "pending": "In attesa",
+  "inProgress": "In corso",
+  "completed": "Completato",
+  "cancelled": "Annullato",
+  "priority": "Priorità",
+  "low": "Bassa",
+  "medium": "Media",
+  "high": "Alta",
+  "emergency": "Emergenza",
+  "noMaintenanceRequests": "Nessuna richiesta di manutenzione",
+  "noMaintenanceRequestsDescription": "Tutte le richieste di manutenzione appariranno qui"
 }

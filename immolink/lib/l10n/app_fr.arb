@@ -166,8 +166,20 @@
   "logoutConfirmation": "Êtes-vous sûr de vouloir vous déconnecter?",
   "changePassword": "Changer le mot de passe",
   "all": "Tout",  "searchToFindResults": "Commencez à taper pour trouver des résultats",
-  "searchHint": "Rechercher des propriétés, locataires ou messages",
-  "noResultsFound": "Aucun résultat trouvé",
+  "searchHint": "Rechercher des propriétés, locataires ou messages",  "noResultsFound": "Aucun résultat trouvé",
   "tryDifferentSearch": "Essayez un terme de recherche différent",
-  "filterProperties": "Filtrer les propriétés"
+  "filterProperties": "Filtrer les propriétés",
+  "maintenanceRequests": "Demandes de maintenance",
+  "filterRequests": "Filtrer les demandes",
+  "pending": "En attente",
+  "inProgress": "En cours",
+  "completed": "Terminé",
+  "cancelled": "Annulé",
+  "priority": "Priorité",
+  "low": "Faible",
+  "medium": "Moyen",
+  "high": "Élevé",
+  "emergency": "Urgence",
+  "noMaintenanceRequests": "Aucune demande de maintenance",
+  "noMaintenanceRequestsDescription": "Toutes les demandes de maintenance apparaîtront ici"
 }

@@ -12,6 +12,7 @@ import 'package:immolink/features/maintenance/presentation/pages/maintenance_man
 import 'package:immolink/features/maintenance/presentation/pages/maintenance_request_page.dart';
 import 'package:immolink/features/payment/presentation/pages/make_payment_page.dart';
 import 'package:immolink/features/payment/presentation/pages/payment_history_page.dart';
+import 'package:immolink/features/property/domain/models/property.dart';
 import 'package:immolink/features/property/presentation/pages/add_property_page.dart';
 import 'package:immolink/features/property/presentation/pages/property_details_page.dart';
 import 'package:immolink/features/property/presentation/pages/property_list_page.dart';
@@ -40,9 +41,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/home',
         builder: (context, state) => HomePage(),
-      ),      GoRoute(
+      ),
+      GoRoute(
         path: '/add-property',
-        builder: (context, state) => AddPropertyPage(),
+        builder: (context, state) => AddPropertyPage(
+          propertyToEdit: state.extra as Property?,
+        ),
       ),
       GoRoute(
         path: '/properties',
@@ -53,14 +57,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => PropertyDetailsPage(
           propertyId: state.pathParameters['id']!,
         ),
-      ),      GoRoute(
+      ),
+      GoRoute(
         path: '/chat/:conversationId',
         builder: (context, state) => ChatPage(
           conversationId: state.pathParameters['conversationId']!,
           otherUserName: state.uri.queryParameters['otherUser'] ?? 'User',
           otherUserId: state.uri.queryParameters['otherUserId'],
         ),
-      ),GoRoute(
+      ),
+      GoRoute(
         path: '/conversations',
         builder: (context, state) => const ConversationsListPage(),
       ),
@@ -89,7 +95,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => MakePaymentPage(
           propertyId: state.uri.queryParameters['propertyId'],
         ),
-      ),      // Settings route
+      ),
+      // Settings route
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsPage(),
@@ -98,11 +105,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/change-password',
         builder: (context, state) => const ChangePasswordPage(),
-      ),      // Edit Profile route
+      ),
+      // Edit Profile route
       GoRoute(
         path: '/edit-profile',
         builder: (context, state) => const EditProfilePage(),
-      ),      // Profile route
+      ),
+      // Profile route
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfilePage(),
@@ -111,7 +120,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/search',
         builder: (context, state) => const SearchPage(),
-      ),      // Reports route
+      ),
+      // Reports route
       GoRoute(
         path: '/reports',
         builder: (context, state) => const ReportsPage(),
@@ -126,7 +136,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final otherUserId = state.uri.queryParameters['otherUserId'];
           final otherUserName = state.uri.queryParameters['otherUserName'];
-          
+
           if (otherUserId == null || otherUserName == null) {
             return const Scaffold(
               body: Center(
@@ -134,7 +144,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             );
           }
-          
+
           return ChatPage(
             conversationId: 'new',
             otherUserId: otherUserId,
