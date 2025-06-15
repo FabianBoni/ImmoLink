@@ -9,10 +9,21 @@ import 'package:immolink/core/providers/theme_provider.dart';
 import 'package:immolink/core/providers/locale_provider.dart';
 import 'package:immolink/l10n_helper.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart' as dotenv;
+import 'package:immolink/core/config/db_config.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.dotenv.load(fileName: "lib/config/immolink.env");
+  
+  try {
+    await dotenv.dotenv.load(fileName: ".env");
+    print('Environment file loaded successfully');
+  } catch (e) {
+    print('Failed to load .env file: $e');
+    print('Using default configuration');
+  }
+  
+  // Print configuration for debugging
+  DbConfig.printConfig();
   
   try {
     await DatabaseService.instance.connect();

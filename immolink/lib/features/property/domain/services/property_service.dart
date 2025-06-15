@@ -1,12 +1,18 @@
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:file_picker/file_picker.dart';
 import '../models/property.dart';
 import 'package:immolink/core/config/db_config.dart';
 import '../../../chat/domain/services/chat_service.dart';
 
 class PropertyService {
   final String _apiUrl = DbConfig.apiUrl;
+
+  PropertyService() {
+    print('PropertyService initialized with API URL: $_apiUrl');
+  }
 
   Future<void> addProperty(Property property) async {
     final prefs = await SharedPreferences.getInstance();
@@ -172,6 +178,91 @@ class PropertyService {
       print('Server response: ${response.body}');
       throw Exception('Failed to update property: ${response.statusCode}');
     }
+  }
+  // Upload image to MongoDB and return the file ID
+  Future<String?> uploadImage(PlatformFile file) async {
+    try {
+      print('Starting image upload for: ${file.name}');
+      print('API URL: $_apiUrl');
+      
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$_apiUrl/images/upload'),
+      );      if (file.bytes != null) {
+        // For web platform
+        print('Uploading image from bytes (web)');
+        
+        // Determine content type from file extension
+        String? contentType;
+        if (file.name.toLowerCase().endsWith('.png')) {
+          contentType = 'image/png';
+        } else if (file.name.toLowerCase().endsWith('.jpg') || file.name.toLowerCase().endsWith('.jpeg')) {
+          contentType = 'image/jpeg';
+        } else if (file.name.toLowerCase().endsWith('.gif')) {
+          contentType = 'image/gif';
+        } else if (file.name.toLowerCase().endsWith('.webp')) {
+          contentType = 'image/webp';
+        } else if (file.name.toLowerCase().endsWith('.bmp')) {
+          contentType = 'image/bmp';
+        } else {
+          contentType = 'image/png'; // Default fallback
+        }
+        
+        print('Setting content type: $contentType');
+        
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'image',
+            file.bytes!,
+            filename: file.name,
+            contentType: MediaType.parse(contentType),
+          ),
+        );
+      } else if (file.path != null) {
+        // For mobile platforms
+        print('Uploading image from path (mobile): ${file.path}');
+        request.files.add(
+          await http.MultipartFile.fromPath('image', file.path!),
+        );
+      } else {
+        throw Exception('File has no data');
+      }
+
+      print('Sending upload request to: $_apiUrl/images/upload');
+      final response = await request.send();
+      final responseData = await response.stream.bytesToString();
+
+      print('Upload response status: ${response.statusCode}');
+      print('Upload response data: $responseData');
+
+      if (response.statusCode == 200) {
+        final data = json.decode(responseData);
+        final fileId = data['fileId'];
+        print('Upload successful! File ID: $fileId');
+        // Return the fileId, not the full URL - we'll construct the URL in the UI
+        return fileId;
+      } else {
+        print('Image upload failed: ${response.statusCode} - $responseData');
+        return null;
+      }
+    } catch (e) {
+      print('Error uploading image: $e');
+      return null;
+    }
+  }
+
+  // Upload multiple images
+  Future<List<String>> uploadImages(List<PlatformFile> files) async {
+    final urls = <String>[];
+    
+    for (final file in files) {
+      final url = await uploadImage(file);
+      if (url != null) {
+        urls.add(url);
+      }
+    }
+    
+    return urls;
   }
 }
 

@@ -213,4 +213,110 @@ router.get('/', async (req, res) => {
   }
 });
 
+// PUT route for property updates
+router.put('/:propertyId', async (req, res) => {
+  const client = new MongoClient(dbUri);
+
+  try {
+    await client.connect();
+    const db = client.db(dbName);
+
+    console.log('Updating property:', req.params.propertyId);
+    console.log('Update data:', JSON.stringify(req.body, null, 2));
+
+    // Validate propertyId format
+    if (!ObjectId.isValid(req.params.propertyId)) {
+      return res.status(400).json({ message: 'Invalid property ID format' });
+    }
+
+    // Validate required fields
+    const { landlordId, address, status, rentAmount } = req.body;
+    
+    if (!landlordId || !address || !status || rentAmount === undefined) {
+      return res.status(400).json({ 
+        message: 'Missing required fields: landlordId, address, status, rentAmount' 
+      });
+    }
+
+    // Validate address structure
+    if (!address.street || !address.city || !address.postalCode || !address.country) {
+      return res.status(400).json({ 
+        message: 'Address must include street, city, postalCode, and country' 
+      });
+    }
+
+    // Validate status
+    const validStatuses = ['available', 'rented', 'maintenance'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ 
+        message: 'Status must be one of: available, rented, maintenance' 
+      });
+    }
+
+    // Validate rentAmount
+    if (typeof rentAmount !== 'number' || rentAmount < 0) {
+      return res.status(400).json({ 
+        message: 'Rent amount must be a positive number' 
+      });
+    }
+
+    // Create update document (exclude _id from update)
+    const updateDocument = {
+      landlordId: landlordId.toString(),
+      address: {
+        street: address.street.toString(),
+        city: address.city.toString(),
+        postalCode: address.postalCode.toString(),
+        country: address.country.toString()
+      },
+      status,
+      rentAmount: Number(rentAmount),
+      details: req.body.details ? {
+        size: req.body.details.size ? Number(req.body.details.size) : 0,
+        rooms: req.body.details.rooms ? Number(req.body.details.rooms) : 0,
+        amenities: Array.isArray(req.body.details.amenities) ? req.body.details.amenities : []
+      } : {
+        size: 0,
+        rooms: 0,
+        amenities: []
+      },
+      imageUrls: Array.isArray(req.body.imageUrls) ? req.body.imageUrls : [],
+      tenantIds: Array.isArray(req.body.tenantIds) ? req.body.tenantIds : [],
+      outstandingPayments: req.body.outstandingPayments ? Number(req.body.outstandingPayments) : 0,
+      updatedAt: new Date()
+    };
+
+    console.log('Formatted update document:', JSON.stringify(updateDocument, null, 2));
+
+    const result = await db.collection('properties').updateOne(
+      { _id: new ObjectId(req.params.propertyId) },
+      { $set: updateDocument }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: 'Property not found' });
+    }
+
+    res.json({ 
+      message: 'Property updated successfully',
+      modifiedCount: result.modifiedCount
+    });
+
+  } catch (error) {
+    console.error('Property update error:', error);
+    
+    if (error.code === 121) {
+      console.error('Validation error details:', error.errInfo?.details);
+      return res.status(400).json({ 
+        message: 'Document validation failed', 
+        details: error.errInfo?.details 
+      });
+    }
+    
+    res.status(500).json({ message: 'Error updating property' });
+  } finally {
+    await client.close();
+  }
+});
+
 module.exports = router;

@@ -732,7 +732,6 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
       ),
     );
   }
-
   void _submitForm() async {
     if (_formKey.currentState?.validate() ?? false) {
       HapticFeedback.mediumImpact();
@@ -742,7 +741,36 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
 
       try {
         final currentUser = ref.read(currentUserProvider);
-        final landlordId = currentUser?.id.toString() ?? '';        final property = Property(
+        final landlordId = currentUser?.id.toString() ?? '';
+          // Upload images to MongoDB if any are selected
+        List<String> uploadedImageIds = [];
+        if (_pickerResult != null && _pickerResult!.files.isNotEmpty) {
+          print('Found ${_pickerResult!.files.length} files to upload');
+          final propertyService = ref.read(propertyServiceProvider);
+          
+          for (int i = 0; i < _pickerResult!.files.length; i++) {
+            final file = _pickerResult!.files[i];
+            print('Uploading file ${i + 1}/${_pickerResult!.files.length}: ${file.name}');
+            final imageId = await propertyService.uploadImage(file);
+            if (imageId != null) {
+              uploadedImageIds.add(imageId);
+              print('Successfully uploaded file: $imageId');
+            } else {
+              print('Failed to upload file: ${file.name}');
+            }
+          }
+          print('Total uploaded images: ${uploadedImageIds.length}');
+        } else {
+          print('No images selected for upload');
+        }
+          // Use uploaded image IDs or existing ones for editing
+        final finalImageUrls = uploadedImageIds.isNotEmpty 
+            ? uploadedImageIds 
+            : (widget.propertyToEdit?.imageUrls ?? []);
+            
+        print('Final image URLs for property: $finalImageUrls');
+
+        final property = Property(
           id: widget.propertyToEdit?.id ?? const Uuid().v4(),
           landlordId: landlordId,
           tenantIds: widget.propertyToEdit?.tenantIds ?? [],
@@ -759,11 +787,15 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
             amenities: selectedAmenities,
           ),
           status: widget.propertyToEdit?.status ?? 'available',
-          imageUrls: selectedImages.isNotEmpty ? selectedImages : (widget.propertyToEdit?.imageUrls ?? []),
+          imageUrls: finalImageUrls,
           outstandingPayments: widget.propertyToEdit?.outstandingPayments ?? 0.0,
         );        if (widget.propertyToEdit != null) {
           // Update existing property
           await ref.read(propertyServiceProvider).updateProperty(property);
+          
+          // Invalidate the property provider to refresh the data
+          ref.invalidate(propertyProvider(property.id));
+          ref.invalidate(landlordPropertiesProvider);
           
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -777,6 +809,9 @@ class _AddPropertyPageState extends ConsumerState<AddPropertyPage> with TickerPr
         } else {
           // Create new property
           await ref.read(propertyServiceProvider).addProperty(property);
+          
+          // Invalidate the properties provider to refresh the list
+          ref.invalidate(landlordPropertiesProvider);
           
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

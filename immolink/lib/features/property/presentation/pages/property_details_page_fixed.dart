@@ -5,10 +5,9 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:immolink/features/property/presentation/widgets/invite_tenant_dialog.dart';
-import 'package:immolink/core/widgets/mongo_image.dart';
 import '../../domain/models/property.dart';
 import '../providers/property_providers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -17,29 +16,7 @@ import '../../../../core/theme/app_colors.dart';
 class PropertyDetailsPage extends ConsumerWidget {
   final String propertyId;
 
-  const PropertyDetailsPage({required this.propertyId, super.key});  // Helper method to convert image IDs to MongoDB URLs
-  String _getImageUrl(String imageIdOrPath) {
-    print('Processing image path/ID: $imageIdOrPath');
-    
-    // If it's already a full URL, return as is
-    if (imageIdOrPath.startsWith('http://') || imageIdOrPath.startsWith('https://')) {
-      print('Image is already a full URL: $imageIdOrPath');
-      return imageIdOrPath;
-    }
-    
-    // If it looks like a MongoDB ObjectId (24 hex characters), construct MongoDB image URL
-    if (imageIdOrPath.length == 24 && RegExp(r'^[a-fA-F0-9]+$').hasMatch(imageIdOrPath)) {
-      final mongoUrl = 'http://localhost:3000/api/images/$imageIdOrPath';
-      print('Image looks like MongoDB ID, using: $mongoUrl');
-      return mongoUrl;
-    }
-    
-    // Fallback: if it's a local file, construct backend URL
-    final filename = imageIdOrPath.split('/').last.split('\\').last;
-    final fallbackUrl = 'http://localhost:3000/uploads/$filename';
-    print('Image fallback URL: $fallbackUrl');
-    return fallbackUrl;
-  }
+  const PropertyDetailsPage({required this.propertyId, super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -265,7 +242,7 @@ class PropertyDetailsPage extends ConsumerWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryAccent.withValues(alpha: 0.1),
+                  color: AppColors.primaryAccent.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -318,43 +295,27 @@ class PropertyDetailsPage extends ConsumerWidget {
               borderRadius: BorderRadius.circular(12),
               child: FutureBuilder<LatLng?>(
                 future: _getLocationFromAddress(property.address),
-                builder: (context, snapshot) {                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Container(
-                      color: Colors.grey[100],
-                      child: const Center(child: CircularProgressIndicator()),
-                    );
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError || !snapshot.hasData) {
                     return Container(
                       color: Colors.grey[100],
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.map,
-                            size: 48,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            AppLocalizations.of(context)!.location,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w600,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.location_off,
+                              size: 48,
+                              color: Colors.grey[400],
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              '${property.address.street}\n${property.address.city}, ${property.address.postalCode}\n${property.address.country}',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
+                            const SizedBox(height: 8),                            Text(
+                              AppLocalizations.of(context)!.noProperties,
+                              style: TextStyle(color: Colors.grey[600]),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     );
                   } else {
@@ -395,10 +356,10 @@ class PropertyDetailsPage extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.primaryAccent.withValues(alpha: 0.1),
+                color: AppColors.primaryAccent.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.primaryAccent.withValues(alpha: 0.3),
+                  color: AppColors.primaryAccent.withOpacity(0.3),
                 ),
               ),
               child: Row(
@@ -443,32 +404,16 @@ class PropertyDetailsPage extends ConsumerWidget {
         ],
       ),
     );
-  }  Future<LatLng?> _getLocationFromAddress(Address address) async {
+  }
+
+  Future<LatLng?> _getLocationFromAddress(Address address) async {
     try {
-      debugPrint('Trying to geocode: ${address.street}, ${address.city}, ${address.postalCode}, ${address.country}');
-      
-      // First try Google Maps Geocoding API directly
-      final googleLocation = await _tryGoogleGeocodingAPI(address);
-      if (googleLocation != null) {
-        debugPrint('Google Geocoding successful: ${googleLocation.latitude}, ${googleLocation.longitude}');
-        return googleLocation;
-      }
-      
-      // Then try the built-in geocoding service
+      // First try the built-in geocoding service
       final location = await _tryBuiltInGeocoding(address);
       if (location != null) {
-        debugPrint('Built-in geocoding successful: ${location.latitude}, ${location.longitude}');
         return location;
       }
       
-      // Fallback: Use approximate coordinates for Swiss cities
-      final fallbackLocation = _getSwissCityCoordinates(address.city);
-      if (fallbackLocation != null) {
-        debugPrint('Using fallback coordinates for ${address.city}');
-        return fallbackLocation;
-      }
-      
-      debugPrint('Geocoding failed, returning null');
       return null;
     } catch (e) {
       debugPrint('Error getting location: $e');
@@ -476,87 +421,14 @@ class PropertyDetailsPage extends ConsumerWidget {
     }
   }
 
-  // Try Google Maps Geocoding API directly
-  Future<LatLng?> _tryGoogleGeocodingAPI(Address address) async {
-    try {
-      const apiKey = 'AIzaSyBn2DBnF5XDD-X4JkrT0XKDJSAZwydyNY4';
-      final query = Uri.encodeComponent('${address.street}, ${address.city}, ${address.postalCode}, ${address.country}');
-      final url = 'https://maps.googleapis.com/maps/api/geocode/json?address=$query&key=$apiKey';
-      
-      debugPrint('Trying Google Geocoding API: $url');
-      
-      final response = await http.get(Uri.parse(url));
-      
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        
-        if (data['status'] == 'OK' && data['results'].isNotEmpty) {
-          final location = data['results'][0]['geometry']['location'];
-          return LatLng(location['lat'].toDouble(), location['lng'].toDouble());
-        } else {
-          debugPrint('Google Geocoding API error: ${data['status']} - ${data['error_message'] ?? 'No error message'}');
-        }
-      } else {
-        debugPrint('Google Geocoding API HTTP error: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('Google Geocoding API exception: $e');
-    }
-    return null;
-  }  // Fallback coordinates for common Swiss cities and specific addresses
-  LatLng? _getSwissCityCoordinates(String city) {
-    final coordinates = {
-      'Therwil': LatLng(47.4976342, 7.5536007), // Updated with exact coordinates
-      'Hinterkirchweg 78, Therwil': LatLng(47.4976342, 7.5536007), // Exact coordinates from Google API
-      'Basel': LatLng(47.5596, 7.5886),
-      'Zürich': LatLng(47.3769, 8.5417),
-      'Bern': LatLng(46.9481, 7.4474),
-      'Geneva': LatLng(46.2044, 6.1432),
-      'Lausanne': LatLng(46.5197, 6.6323),
-      'Winterthur': LatLng(47.4979, 8.7240),
-      'Lucerne': LatLng(47.0502, 8.3093),
-      // Add more cities as needed
-    };
-    
-    // Try exact match first
-    if (coordinates.containsKey(city)) {
-      return coordinates[city];
-    }
-    
-    // Try case-insensitive match
-    final cityLower = city.toLowerCase();
-    for (final entry in coordinates.entries) {
-      if (entry.key.toLowerCase() == cityLower) {
-        return entry.value;
-      }
-    }
-    
-    return null;
-  }
-
   Future<LatLng?> _tryBuiltInGeocoding(Address address) async {
     try {
-      final queries = [
-        '${address.street}, ${address.city}, ${address.postalCode}, ${address.country}',
-        '${address.street}, ${address.city}, ${address.country}',
-        '${address.city}, ${address.postalCode}, ${address.country}',
-        '${address.city}, ${address.country}',
-      ];
+      final query = '${address.street}, ${address.city}, ${address.postalCode}, ${address.country}';
+      final locations = await locationFromAddress(query);
       
-      for (final query in queries) {
-        try {
-          debugPrint('Trying geocoding query: $query');
-          final locations = await locationFromAddress(query);
-          
-          if (locations.isNotEmpty) {
-            final location = locations.first;
-            debugPrint('Found location: ${location.latitude}, ${location.longitude}');
-            return LatLng(location.latitude, location.longitude);
-          }
-        } catch (e) {
-          debugPrint('Query "$query" failed: $e');
-          continue;
-        }
+      if (locations.isNotEmpty) {
+        final location = locations.first;
+        return LatLng(location.latitude, location.longitude);
       }
     } catch (e) {
       debugPrint('Built-in geocoding failed: $e');
@@ -644,7 +516,7 @@ class PropertyDetailsPage extends ConsumerWidget {
         Container(
           margin: const EdgeInsets.only(right: 16),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: Colors.black.withOpacity(0.3),
             borderRadius: BorderRadius.circular(20),
           ),
           child: IconButton(
@@ -654,108 +526,26 @@ class PropertyDetailsPage extends ConsumerWidget {
             },
           ),
         ),
-      ],      flexibleSpace: FlexibleSpaceBar(
+      ],
+      flexibleSpace: FlexibleSpaceBar(
         background: property.imageUrls.isNotEmpty
             ? PageView.builder(
                 itemCount: property.imageUrls.length,
                 itemBuilder: (context, index) {
-                  final imageIdOrPath = property.imageUrls[index];
-                  
-                  // Check if it's a MongoDB ObjectId (24 hex characters)
-                  if (imageIdOrPath.length == 24 && RegExp(r'^[a-fA-F0-9]+$').hasMatch(imageIdOrPath)) {
-                    return MongoImage(
-                      imageId: imageIdOrPath,
-                      fit: BoxFit.cover,
-                      loadingWidget: Container(
+                  return Image.network(
+                    property.imageUrls[index],
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
                         color: Colors.grey[300],
-                        child: const Center(
-                          child: CircularProgressIndicator(),
+                        child: const Icon(
+                          Icons.home,
+                          size: 64,
+                          color: Colors.grey,
                         ),
-                      ),
-                      errorWidget: Container(
-                        color: Colors.grey[300],
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.broken_image,
-                              size: 64,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Failed to load image',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  } else {
-                    // Fallback for old image paths
-                    final imageUrl = _getImageUrl(imageIdOrPath);
-                    return Image.network(
-                      imageUrl,
-                      fit: BoxFit.cover,
-                      headers: {
-                        'Cache-Control': 'no-cache',
-                      },
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          color: Colors.grey[300],
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
-                            ),
-                          ),
-                        );
-                      },
-                      errorBuilder: (context, error, stackTrace) {
-                        debugPrint('Error loading image: $imageUrl - $error');
-                        return Container(
-                          color: Colors.grey[300],
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.broken_image,
-                                size: 64,
-                                color: Colors.grey,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Failed to load image',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'URL: $imageUrl',
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 10,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  }
+                      );
+                    },
+                  );
                 },
               )
             : Container(
@@ -768,7 +558,8 @@ class PropertyDetailsPage extends ConsumerWidget {
               ),
       ),
     );
-  }  Widget _buildContactButton(BuildContext context, Property property, WidgetRef ref) {
+  }
+  Widget _buildContactButton(BuildContext context, Property property, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
     
     if (currentUser?.role == 'landlord' && property.status == 'available') {
@@ -783,8 +574,17 @@ class PropertyDetailsPage extends ConsumerWidget {
       );
     }
     
-    // Return empty container instead of message button
-    return const SizedBox.shrink();
+    return FloatingActionButton.extended(
+      onPressed: () {
+        GoRouter.of(context).push('/chat/${property.landlordId}');
+      },
+      backgroundColor: AppColors.primaryAccent,
+      icon: const Icon(Icons.chat, color: Colors.white),
+      label: Text(
+        AppLocalizations.of(context)!.messages,
+        style: const TextStyle(color: Colors.white),
+      ),
+    );
   }
 
   Color _getStatusColor(String status) {
